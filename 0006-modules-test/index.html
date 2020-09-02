@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+</head>
+<body>
+  <pre>
+    // если подключать скрипт как type="module", то в нем импорт работает как надо
+    ----main.js----
+    import Ssds from './something.js';
+    console.log(Ssds); // class Ssds...
+  </pre>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

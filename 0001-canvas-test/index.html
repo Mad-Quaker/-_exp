@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>canvas test</title>
+  <script src="./canvas.js"></script>
+  <script src="./control.js"></script>
+  <script type="text/javascript">
+    window.onload = function () {
+      const img = new Image();
+      let imgReady = false;
+      img.onload = ()=>{imgReady=true;redraw();}
+      img.src = './cubetexture.png';
+      const log = (text)=>$('pre#text').innerText = text;
+      const canvas = document.getElementById('cnvs');
+      const ctx = canvas.getContext('2d');
+
+      function redraw(mtrx = null) {
+        const matrix = mtrx || [1,0,0,1,0,0];
+        if (imgReady) {
+          const stacks = [
+            {action: 'setTransform', args: [1,0,0,1,0,0]},
+            {action: 'clearRect', args: [0, 0, 400, 400]},
+            {action: 'setTransform', args: [...matrix]},
+            {action: 'drawImage', args: [img, 50, 50, 128, 128]},
+          ];
+          // ctx.setTransform(1,0,0,1,0,0);
+          // ctx.clearRect(0, 0, 400, 400);
+          // ctx.setTransform(...matrix);
+          // ctx.drawImage(img, 50, 50, 128, 128);
+          draw(stacks);
+        }
+      }
+
+      window.log = log;
+      window.ctx = ctx;
+      window.img  = img;
+      // window.draw = (f) => f(ctx);
+      window.redraw = redraw;
+
+      ctrl = control($('#matrix'),{min:-2,max:2,step:0.1}).make(1,0,0,1,{value:0,max:100,min:-100, step:1},{value:0,max:100,min:-100, step:1});
+      ctrl.onUpdate = ()=>{
+        redraw(ctrl.getValues());
+      };
+      ctrl.onUpdate();
+    };
+
+  </script>
+  <style type="text/css">
+    BODY { background: #AAA; }
+    CANVAS { background: #FFF; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
+    DIV.row-2 {
+      display: flex;
+      width: 450px;
+      border: 1px solid green;
+      flex-wrap: wrap;
+      padding: 10px;
+    }
+    DIV.row-2 > INPUT {
+      width: 100px;
+    }
+    DIV.row-2 > DIV {
+      display: inline-block;
+      width: 10px;
+    }
+    DIV.row-2 > INPUT+DIV {
+      width: 35px;
+    }
+  </style>
+</head>
+<body>
+  <p>Canvas.transform testing with generated controls</p>
+  <p style="opacity: 0.5;">most of this was written spontaneously and that's why it look so disorganized</p>
+  <canvas id="cnvs" width="400" height="400">no canvas</canvas>
+  <pre id='text'></pre>
+  <form id="control">
+    <div id="matrix" class="row-2"></div>
+  </form>
+</body>
+</html>

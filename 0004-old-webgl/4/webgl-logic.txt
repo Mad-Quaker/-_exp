@@ -1,0 +1,182 @@
+[0]
+	// инициализация GL
+
+[0.1]
+	// canvas - уже выбранный элемент HTML
+	gl = initWebGL(canvas);
+		// просто дергаем canvas.getContext("webgl"),
+		// canvas.getContext("experimental-webgl")
+		// или кидаем ошибку, если не получается
+	horizAspect = canvas.height/canvas.width;
+		// сохраняем соотношение сторон, на будущее
+		// хз почему y/x, а не x/y
+    gl.clearColor(0.0, 0.0, 0.0, 1.0); // задаем цвет заливки
+    gl.enable(gl.DEPTH_TEST); // проверка глубины???
+    gl.depthFunc(gl.LEQUAL); // включаем zBuffer (глубина сцены) 
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    	// задаем область рисования
+
+[1]
+	// собственно, подготовка данных (вершин, шейдеров и пр.)
+
+[1.1]
+	// Исходные данные
+
+[1.1.1.1]
+	// координаты вершин
+	// линейный массив, группировать не нужно, все автоматом
+	var vertices = [
+		 1.0,  1.0,  0.0,
+		-1.0,  1.0,  0.0,
+		 1.0, -1.0,  0.0,
+		-1.0, -1.0,  0.0
+	];
+
+[1.1.1.2]
+	// цвет вершин
+	// для каждой вершины отдельный цвет (4 параметра - RGBA)
+	// при отрисовке цвета будут интерполироваться
+	var colors = [
+	    1.0,  1.0,  1.0,  1.0,    // white
+	    1.0,  0.0,  0.0,  1.0,    // red
+	    0.0,  1.0,  0.0,  1.0,    // green
+	    0.0,  0.0,  1.0,  1.0     // blue
+	];
+
+[1.1.2.1]
+	// вершинный (vertex) шейдер
+	attribute vec3 aVertexPosition;// binded in initShaders()
+	attribute vec4 aVertexColor; // binded in initShaders()
+	uniform mat4 uMVMatrix; // defined in setMatrixUniforms()
+	uniform mat4 uPMatrix;// defined in setMatrixUniforms()
+	varying lowp vec4 vColor; // proxying to fragment shader
+
+	void main(void) {
+		gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+		vColor = aVertexColor; // proxied to fragment shader
+	}
+
+[1.1.2.2]
+	// пиксельный (fragment) шейдер
+	varying lowp vec4 vColor; // initShaders (binded) -> shader-vs
+
+	void main(void) {
+		gl_FragColor = vColor;
+	}
+
+[1.2]
+	// Забиваем данные в видеопамять
+
+[1.2.1]
+	// определяем буфер в видеопамяти под координаты вершин
+	// (для каждого объекта - новый)
+	squareVerticesBuffer = gl.createBuffer();
+		// сохраняем ID буфера ..
+	gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer);
+		// .. выделяем память ..
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+		// .. и пишем туда данные из vertices*[1.1.1]
+	// я хз, почему столько манипуляций, когда можно обойтись одной функцией
+	// видимо, есть нюансы. а может и просто пережиток прошлого
+
+[1.2.2]
+	// буфер под цвета вершин,
+	// все так же, как и и координаты вершин:
+	squareVerticesColorBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesColorBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+	// данные из colors*[1.1.2]
+
+[1.3]
+	// Инициализируем шейдеры
+
+[1.3.1]
+	// берем код вершинного шейдера (*[1.1.2.1] - просто текст-исходник)
+	vertexShader = gl.createShader(gl.VERTEX_SHADER);
+	gl.compileShader(vertexShader); // .. компилируем
+	// сохраняется он в туже переменную - vertexShader
+
+[1.3.2]
+	// теже манипуляции для пиксельного (fragment) шейдера *[1.1.2.2]
+	fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+	gl.compileShader(fragmentShader); // .. компилируем
+	// fragmentShader
+
+[1.3.3]
+	// линкуем все шейдеры в "программу"
+	shaderProgram = gl.createProgram(); // создаем и сохраняем новый ID для кода
+	gl.attachShader(shaderProgram, vertexShader);
+		// используем вершинный шейдер *[1.3.1]
+	gl.attachShader(shaderProgram, fragmentShader);
+		// используем пиксельный шейдер *[1.3.2]
+	gl.linkProgram(shaderProgram); // связываем все в одну "программу"
+	// здесь могут вылезти ошибки в коде шейдеров,
+	// юзать gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)
+	gl.useProgram(shaderProgram);
+	// запускаем готовую программу
+	// (видимо, для смены заранее подготовленных наборов шейдеров)
+
+[1.3.4]
+	// указываем, используемые имена переменных в шейдерах
+
+[1.3.4.1]
+	// для координат вершин
+	vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+	gl.enableVertexAttribArray(vertexPositionAttribute);
+		// aVertexPosition
+
+[1.3.4.2]
+	// для цвета вершин
+	vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
+	gl.enableVertexAttribArray(vertexColorAttribute);
+		// aVertexColor
+
+[2]
+	// собственно, сама отрисовка
+
+[2.1.1]
+    // очищаем "экран" (цвет и глубину)
+	gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+
+[2.1.2]
+	// задаем перспективу
+	perspectiveMatrix = makePerspective(45, 1/horizAspect, 0.1, 256.0);
+		// параметры:
+		// fov, aspect(x/y), znear, zfar
+	loadIdentity();
+		// просто инициализирует единичную матрицу
+		// в переменной mvMatrix
+	mvTranslate([-0.0, 0.0, -6.0]);
+		// переносим (объект или камеру?)
+
+[2.1.3]
+	// привязываем буферы с данными для сцены
+
+[2.1.3.1]
+	// буфер с координатами
+	gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer);
+		// squareVerticesBuffer задан в *[1.2.1]
+	gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+		// vertexPositionAttribute имя, определенное в *[1.3.4.1]
+
+[2.1.3.2]
+	// буфер с цветами
+	gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesColorBuffer);
+		// squareVerticesColorBuffer задан в *[1.2.2]
+	gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, 0);
+		// vertexColorAttribute имя, определенное в *[1.3.4.2]
+
+[2.1.3.3]
+	// задаем матрицы для шейдеров
+	setMatrixUniforms() {
+		var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+		gl.uniformMatrix4fv(pUniform, false, new Float32Array(perspectiveMatrix.flatten()));
+		var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(mvMatrix.flatten()));
+	}
+
+[2.1.3.4]
+	// рисуем объект
+	gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+		// параметры:
+		// режим рисования, смещение, количество вершин

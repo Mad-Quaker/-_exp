@@ -1,0 +1,52 @@
+<html>
+  <head>
+    <title>WebGL Demo</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script src="sylvester.js" type="text/javascript"></script>
+    <script src="glUtils.js" type="text/javascript"></script>
+    <script src="script.js" type="text/javascript"></script>
+
+    <!-- Fragment shader program -->
+
+    <script id="shader-fs" type="x-shader/x-fragment">
+    	varying lowp vec4 vColor; // initShaders (binded) -> shader-vs
+    	
+    	void main(void) {
+      		gl_FragColor = vColor;
+      		// set pixel color
+      		// used through vertex shaders
+		}
+    </script>
+    
+    <!-- Vertex shader program -->
+    
+    <script id="shader-vs" type="x-shader/x-vertex">
+		attribute vec3 aVertexPosition;
+		attribute vec4 aVertexColor;
+		// binded in initShaders()
+
+		uniform mat4 uMVMatrix;
+		uniform mat4 uPMatrix;
+		// defined in setMatrixUniforms()
+
+		varying lowp vec4 vColor;
+		// proxying to fragment shader
+
+		void main(void) {
+			gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+			// sets vertex position using camera/perspective matrices
+			// think, it can be controlled apart of models/objects
+			// in scene
+
+			vColor = aVertexColor;
+			// proxied to fragment shader
+		}
+    </script>
+  </head>
+  
+  <body onload="start()">
+    <canvas id="glcanvas" width="640" height="480">
+      Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
+    </canvas>
+  </body>
+</html>
