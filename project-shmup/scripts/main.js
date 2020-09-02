@@ -66,6 +66,7 @@ async function Init(document) {
   ]);
   const projectilesAtlas = await Atlas('./projectiles.png', [
     { id:'plasmaBlue', bounds: [ 0, 0, 8, 16] },
+    { id:'plasmaBlueEnd', bounds: [ 8, 0, 8, 16], animate: { frames: 6, fps: 40} },
 
   ]);
   const shipsAtlas = await Atlas('./star-ship.png', [
@@ -92,7 +93,7 @@ async function Init(document) {
     y: Game.player.y+70,
     z: 9,
     size: 1,
-    blending: 'additive',
+    blend: 'additive',
     sprite: shipsBurst.byId('playerBurst'),
     step: function() {
       this.x = Game.player.x+1;
@@ -118,14 +119,24 @@ async function Init(document) {
       y: onScreen ? randomI(canvas.height) - canvas.height : -200,
       z: 3,
       size: 2,
+      health: [100,200][rand],
       // vX: Math.random() * 40 - 10,
       vY: Math.random() * 100 + 280,
       sprite: asteroidsAtlas.byId(['asteroid1','asteroid2'][rand]),
       body: [{width: 84, height: 72}, {width: 168, height: 120}][rand],
+      takeDamage: function(other, damage) {
+        this.health -= damage;
+        if (this.health <= 0) this.die(other);
+      },
+      die: function() {
+        this.active = false;
+        this.step = undefined;
+        asteroidsCount = Math.max(0, --asteroidsCount);
+      },
       step: function() {
         if (this.y > canvas.height + 200) {
           this.active = false;
-          asteroidsCount--;
+          asteroidsCount = Math.max(0, --asteroidsCount);
         }
       }
     });
@@ -188,7 +199,7 @@ async function Init(document) {
       this.y = Math.floor(canvas.height * randomF());
       this.vY = 10 + 70 * Math.pow(randomF(),2);
       this.sprite = starsAtlas.byId(randomA('st1', 'st2', 'st3', 'st4', 'st5'));
-      this.blending = 'additive';
+      this.blend = 'additive';
       this.freq = randomF();
       this.size = this.vY < 40 ? 1 : 2;
       this.step = function({now}) {
@@ -200,8 +211,9 @@ async function Init(document) {
       }
     });
 
-  const shooter = new Weapons(Game.objects);
+  const shooter = new Weapons(Game.objects, Game.particles);
   shooter.sprites.plasmaBlue = projectilesAtlas.byId('plasmaBlue');
+  shooter.sprites.plasmaBlueEnd = projectilesAtlas.byId('plasmaBlueEnd');
   let fireOn = false;
 
   // Input
@@ -260,14 +272,14 @@ async function Init(document) {
   
   const ctx = canvas.ctx;
   
-  function render(prev = new Date().getTime()) {
+  function tick(prev = new Date().getTime()) {
     // const now = new Date().getTime();
     // const delta = Game.paused ? 0 : ((now - prev) || 0);
     // const time = Game.time.calc(prev);
     const {real, realDelta, now, delta} = Game.time.calc(prev);
     Game.backTime.calc(prev);
     
-    window.requestAnimationFrame(()=>render(real));
+    window.requestAnimationFrame(()=>tick(real));
     
     // Process part    
     if (fireOn) shooter.shoot({now, delta}, Game.player.barrelsPos(), Game.player);
@@ -292,14 +304,15 @@ async function Init(document) {
           pointer.isOn ? "Lock ✔" : 'Lock',
           'Fullscreen - ' + (canvas.fullscreen?'ON':'OFF'),
           shooter.weaponId,
-          `Active count - ${Game.objects.activeCount}`
+          `Active count - ${Game.objects.activeCount}`,
+          `Asteroids count - ${asteroidsCount}`
         ]);
     }
       
     // drawing pointer(mouse)
     if (debug.showPointer && pointer.isOn) canvas.drawPointer(pointer.pos);
   }
-  render();
+  tick();
 }
 
 window.onload = ()=>Init(document);

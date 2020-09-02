@@ -91,10 +91,10 @@ export class Canvas {
     this.alpha = value > 0 ? value : 1;
   }
   draw(o, i, now, delta) {
-    this.ctx.globalAlpha = o.alpha || this.defaultAlpha;
-    this.ctx.globalCompositeOperation = (o.blending && o.blending in blending) ? blending[o.blending] : blending[this.defaultBlending];
+    this.ctx.globalAlpha = o.alpha === undefined ? this.defaultAlpha : o.alpha;
+    this.ctx.globalCompositeOperation = (o.blend && o.blend in blending) ? blending[o.blend] : blending[this.defaultBlending];
     if (o.sprite) {
-      this.ctx.drawImage(...o.sprite({x: o.x, y: o.y, now, size: o.size || 2}));
+      this.ctx.drawImage(...o.sprite({x: o.x, y: o.y, now: now - (o.phase || 0), size: o.size || 2}));
     } else {
       this.ctx.fillStyle = o.color || '#FFF';
       this.ctx.beginPath();

@@ -4,11 +4,13 @@ export class Weapons {
   weapons = [];
   weaponId = undefined;
   fireCooldown = false;
-  constructor (bulletsObjects) {
+  constructor (bulletsScope, particlesScope) {
+    if (!bulletsScope || !particlesScope) throw Error("Objects['Actors'] and Objects['Particles'] should be provided for new Weapons(bullets, particles)!");
     this.selected = 'plasma';
     this.switchDelay = 500;
     this.fireCooldown = 0;
-    this.bullets = bulletsObjects || new Objects('Bullets', 10000);
+    this.bullets = bulletsScope;
+    this.particles = particlesScope;
     this.sprites = {};
     this.init();
   }
@@ -23,10 +25,11 @@ export class Weapons {
     this.fireCooldown = now + 1000 / (this.weapons[this.weaponId].shotsPerSec || 10);
   }
   init () {
+    const particles = this.particles;
     // weapon - 1 - plasma
     this.add('plasma', {shotsPerSec: 10}, ({now,delta}, position, parent) => {
-      const plasmaBlue = this.sprites['plasmaBlue'];
-      this.bullets.addX(2, {...position, now, z: 8, size: 2, blending: 'additive', parent }, function(i,r) {
+      const sprites = this.sprites;
+      this.bullets.addX(2, {...position, now, z: 8, size: 2, blending: 'additive', parent, damage: 20 }, function(i,r) {
         // this.y = this.y - r * 8;
         // this.x = this.x + (r*20-10);
         if (position.spread) {
@@ -39,12 +42,37 @@ export class Weapons {
         this.vY = -1500;
         this.ttl = now + 700;
         this.alpha = 1;
-        this.sprite = plasmaBlue;
-        this.blending = 'additive';
+        this.sprite = sprites['plasmaBlue'];
+        this.blend = 'additive';
         this.body = {width: 14, height: 24};
-        this.touch = function (other) {
-          if (other === this.parent) return;
-          this.active = false;
+        this.touch = function (other, now) {
+          if (other === this.parent || other.parent === this.parent) return;
+          if (other.takeDamage) other.takeDamage(this, this.damage);
+          this.y = other.body.calc().bottom + this.body.height/2;
+          this.touch = undefined;
+          this.body = undefined;
+          this.sprite = sprites['plasmaBlueEnd'];
+          this.phase = now + 18; // fix animation by frame delta time?
+          this.size = 2;
+          this.vX = 0;
+          this.vY = other.vY;
+          this.ttl = now + 150; // 1000/40*6  >>  1/40s (25ms) for 6 frames = 150ms
+          particles.addX(3, {
+            x: this.x,
+            y: this.y,
+            blend: 'additive',
+            color: '#8ad4e4',
+            size: 0.1,
+            ttl: now + 250,
+            step: function({now}) {
+              const timespan = Math.max(0, this.ttl - now) / 250;
+              this.size = 1+Math.max(0,1-timespan) * 3;
+              this.alpha = timespan ** 0.3;
+            }
+          }, function () {
+            this.vX = Math.random() * 500 - 250;
+            this.vY = 500;
+          });
         }
         // this.color = '#AAF';
       })

@@ -23,11 +23,8 @@ export function Atlas(url, def) {
           const currentFrameOffset = (now = 0) => {
             if (!animate) return 0;
             const msPerFrame = 1000 / animate.fps; // 1000 / 10 = 100ms
-              if (isNaN(msPerFrame)) console.log(`${msPerFrame} = 1000 / ${animate.fps}`)
             const totalAnimationTime = msPerFrame * animate.frames; // 100 * 6 = 600ms full animation cycle
-              if (isNaN(totalAnimationTime)) console.log(`${totalAnimationTime} = ${msPerFrame} * ${animate.frames}`)
             const ret = Math.floor((now % totalAnimationTime) / msPerFrame) * width;
-              if (isNaN(ret)) console.log(`${ret} =  Math.floor((${now} % ${totalAnimationTime}) / ${msPerFrame}) * ${width}`)
             return ret;
           }
           return [atlas.image, offsetX + currentFrameOffset(now), offsetY, width, height, ...[x-width*size/2, y-height*size/2, width*size, height*size].map(Math.floor)];

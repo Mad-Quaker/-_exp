@@ -108,8 +108,8 @@ export class Objects {
         if (!(prts[j] && prts[j].active)) continue;
         this.activeCount++;
         if (prts[i].body && prts[j].body && this.isTouching(prts[i].body.calc(), prts[j].body.calc())) {
-          if (prts[i].touch) prts[i].touch(prts[j]);
-          if (prts[j].touch) prts[j].touch(prts[i]);
+          if (prts[i].touch) prts[i].touch(prts[j], now);
+          if (prts[j].touch) prts[j].touch(prts[i], now);
         }
       }
       
