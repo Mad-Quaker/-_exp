@@ -1,42 +1,53 @@
-export function Atlas(url, def) {
-  const atlas = {
-    err: undefined,
-    image: new Image(),
-    sprite: [],
-    titles: [],
-    cnt: def.length,
-    byId: function (id) { // find sprite index by id
-      let returnIndex = this.titles.findIndex(e=>(e==id)?true:false);
-      if (returnIndex === -1) {
-        throw new Error(`Can't find sprite with id='${id}' in atlas('${url}')`);
-      }
-      return this.sprite[returnIndex];
-    }
-  };
-  atlas.sprite[-1] = ({x,y})=>{ return [0,0,0,0, 0,0,0,0]; } // error fallback, prevent wall-of-errors
-  return new Promise((resolve, reject) => { 
-    atlas.image.onload = ()=>{
-      def.forEach(({id, bounds: initBounds, animate}, i)=> {
-        const [offsetX,offsetY,width,height] = initBounds;
-        atlas.titles[i] = id;
-        atlas.sprite[i] = function({x,y,size=1,now}){
-          const currentFrameOffset = (now = 0) => {
-            if (!animate) return 0;
-            const msPerFrame = 1000 / animate.fps; // 1000 / 10 = 100ms
-            const totalAnimationTime = msPerFrame * animate.frames; // 100 * 6 = 600ms full animation cycle
-            const ret = Math.floor((now % totalAnimationTime) / msPerFrame) * width;
-            return ret;
-          }
-          return [atlas.image, offsetX + currentFrameOffset(now), offsetY, width, height, ...[x-width*size/2, y-height*size/2, width*size, height*size].map(Math.floor)];
-        };
-      });
-      resolve();
-    };
-    atlas.image.onerror = err=>{
-      atlas.err = err;
-      reject(err); 
-    };
+export class Atlas {
+  constructor() {
+    this.err = [];
+    this.list = {};
+    this._promises = [];
+  }
 
-    atlas.image.src = url;
-  }).then(()=>atlas);
+
+  load(url, defs) {
+    const image = new Image();
+    this._promises.push(new Promise((resolve,reject) => {
+      image.onload = ()=>{
+        defs.forEach(({id, bounds, animate},i)=> {
+          if (!id) { throw Error(`'${url}'[${i}]: no 'id' provided`) };
+          const [offsetX,offsetY,width,height,centerOX,centerOY] = bounds;
+          this.list[id] = {
+            drawBox: function({x,y,size=1}) { // ctx.strokeRect(...sprite.drawBox());
+              return [
+                x - width * size / 2, // left
+                y - height * size / 2, // right
+                width * size, // width
+                height * size, // height              
+              ];
+            },
+            draw: function({x,y,size=1,now}){
+              const currentFrameOffset = (now = 0) => {
+                if (!animate) return 0;
+                const msPerFrame = 1000 / animate.fps; // 1000 / 10 = 100ms
+                const totalAnimationTime = msPerFrame * animate.frames; // 100 * 6 = 600ms full animation cycle
+                const ret = Math.floor((now % totalAnimationTime) / msPerFrame) * width;
+                return ret;
+              }
+              return [image, offsetX + currentFrameOffset(now), offsetY, width, height, ...[x-width*size/2-(centerOX||0), y-height*size/2-(centerOY||0), width*size, height*size].map(Math.floor)];
+            },
+          };
+        });
+        resolve(true);
+      };
+      image.onerror = err=>{
+        const error = `'${url}': ${err}`;
+        this.errors.push(error);
+        reject(false);
+      }
+    }));
+    image.src = url;
+    return this;
+  }
+
+  isLoaded() { // pass only when loaded
+    return Promise.all(this._promises).then(()=>true, (error)=>{ throw Error(error); });
+  }
+
 }

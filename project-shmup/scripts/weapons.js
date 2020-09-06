@@ -50,13 +50,14 @@ export class Weapons {
           if (other.takeDamage) other.takeDamage(this, this.damage);
           this.y = other.body.calc().bottom + this.body.height/2;
           this.touch = undefined;
-          this.body = undefined;
-          this.sprite = sprites['plasmaBlueEnd'];
-          this.phase = now + 18; // fix animation by frame delta time?
-          this.size = 2;
+          // this.body = {width: 14, height: 24};
+          this.sprite = sprites['plasmaBlueHit'];
+          this.bodyColor = '#F00';
+          this.phase = now;
+          // this.size = 2;
           this.vX = 0;
           this.vY = other.vY;
-          this.ttl = now + 150; // 1000/40*6  >>  1/40s (25ms) for 6 frames = 150ms
+          this.ttl = now + 99 - 17; // 1000/30*3  >>  1/30s (33ms) for 3 frames = 99ms (-17ms - frame delta time compensation, no ghost last frame)
           particles.addX(3, {
             x: this.x,
             y: this.y,

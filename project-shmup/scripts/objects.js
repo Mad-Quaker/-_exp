@@ -79,7 +79,7 @@ export class Objects {
       this.items[this.cntPointer] = item;
       return;
     } else {
-      console.error(`!!! No space for new Object in ${this.classname} !!!`);
+      console.error(`!!! No space for new ${this.classname} !!!`);
     }
   }
   isTouching(objA, objB) {

@@ -3,14 +3,14 @@ const blending = {
   "additive" : "screen",
   "shadow" : "soft-light",
 };
-export class Canvas {
+export class Renderer {
   constructor (options={}) {
     const width = options.width || window.innerWidth;
     const height = options.height || window.innerHeight;
     const canvas = document.createElement('canvas');
-  
     canvas.width = width;
     canvas.height = height;
+    document.body.appendChild(canvas);
 
     this.blur = options.blur || false;
     this._draw = true;
@@ -25,9 +25,6 @@ export class Canvas {
     this.width = canvas.width;
     this.height = canvas.height;
     return this;
-  }
-  bind(element) {
-    element.appendChild(this.element);
   }
   smoothing(value) {
     this.ctx.imageSmoothingEnabled = value || false;
@@ -47,8 +44,9 @@ export class Canvas {
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.fillRect(0, 0, this.width, this.height);
   }
-  renderSwitch (state) {
-    this.draw = state;
+  switch (state) {
+    if (state === this._draw) return;
+    this._draw = state;
     const now = new Date;
     console.log(`${now.getHours()}:${now.getMinutes()}:${now.getSeconds()} - ${state?'resumed':'paused'}`);
   }
@@ -69,12 +67,16 @@ export class Canvas {
     const boxHeight = lines.length * 15; // 60
     this.ctx.font = options?.font || '10pt serif';
     this.ctx.fillStyle = options?.bg?.color || '#444';
-    let boxWidth = 0;
-    lines.forEach(text => {
-      let width = this.ctx.measureText(text).width;
-      boxWidth = (boxWidth < width) ? width : boxWidth;
-    });
-    
+    let boxWidth = options?.minWidth || 0;
+    if (options?.width) {
+      boxWidth = options.width;
+    } else {
+      lines.forEach(text => {
+        let width = this.ctx.measureText(text).width;
+        boxWidth = (boxWidth < width) ? width : boxWidth;
+      });
+    }
+      
     this.ctx.globalAlpha = options?.bg?.alpha || 0.3;
     // ctx.fillRect(canvas.width - boxWidth, 5, boxWidth, boxHeight);
     this.ctx.fillRect(5, 5, boxWidth + 10, boxHeight + 5);
@@ -94,19 +96,23 @@ export class Canvas {
     this.ctx.globalAlpha = o.alpha === undefined ? this.defaultAlpha : o.alpha;
     this.ctx.globalCompositeOperation = (o.blend && o.blend in blending) ? blending[o.blend] : blending[this.defaultBlending];
     if (o.sprite) {
-      this.ctx.drawImage(...o.sprite({x: o.x, y: o.y, now: now - (o.phase || 0), size: o.size || 2}));
+      this.ctx.drawImage(...o.sprite.draw({x: o.x, y: o.y, now: now - (o.phase || 0), size: o.size || 2}));
     } else {
       this.ctx.fillStyle = o.color || '#FFF';
       this.ctx.beginPath();
       this.ctx.arc(o.x, o.y, o.size, 0, 2*Math.PI);
       this.ctx.fill();
     }
-    if (this.drawDebug && o.body) {
-      this.ctx.strokeStyle = '#2F2';
+    if (this.drawDebug == 'body' && o.body) {
+      this.ctx.strokeStyle = o.bodyColor || '#2F2';
       this.ctx.beginPath();
       this.ctx.strokeRect(...o.body.calcBox());
-      this.ctx.fill();
-
+    }
+    if (this.drawDebug == 'sprite' && o.sprite) {
+      const sizes = o.sprite.drawBox({x:o.x,y:o.y,size:o.size}); // [left,top,width,height]
+      this.ctx.strokeStyle = '#28F';
+      this.ctx.beginPath();
+      this.ctx.strokeRect(...sizes);
     }
   }
   drawPointer(pos) {
