@@ -278,6 +278,8 @@ async function Init(document) {
       renderer.renderObjects(Game.objects.items, {now, delta}); // render objects
       renderer.renderObjects(Game.particles.items, {now, delta}); // render particles
 
+      // const realActiveParticles = Game.particles.items.reduce((a,c)=>a+(c && c.active ? 1 : 0),0);
+
       // layer with text
       if (renderer.drawDebug)
         renderer.renderInfo([
@@ -286,9 +288,7 @@ async function Init(document) {
           pointer.isOn ? "Lock ✔" : 'Lock',
           'Fullscreen - ' + (renderer.fullscreen?'ON':'OFF'),
           shooter.weaponId,
-          `Active count - ${Game.objects.activeCount}`,
-          `Particles count - ${Game.particles.activeCount}`,
-          `Asteroids count - ${asteroidsCount}`,
+          `Active obj(${Game.objects.activeCount}), fx(${Game.particles.activeCount})`,
           `Debug: ${renderer.drawDebug}`,
         ], {width: 170});
     }

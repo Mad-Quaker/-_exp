@@ -75,7 +75,6 @@ export class Weapons {
             this.vY = 500;
           });
         }
-        // this.color = '#AAF';
       })
     });
     // weapon - 2 - splash

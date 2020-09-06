@@ -1,5 +1,5 @@
 const blending = {
-  "opaque" : "source-over",
+  "normal" : "source-over",
   "additive" : "screen",
   "shadow" : "soft-light",
 };
@@ -15,7 +15,7 @@ export class Renderer {
     this.blur = options.blur || false;
     this._draw = true;
     this.defaultAlpha = 1.0;
-    this.defaultBlending = 'opaque';
+    this.defaultBlending = 'normal';
     this.drawDebug = false;
     this.fullscreen = false;
     this.element = canvas;
@@ -30,7 +30,7 @@ export class Renderer {
     this.ctx.imageSmoothingEnabled = value || false;
   }
   blendMode(mode) {
-    if (mode in blending) this.defaultBlending = blending[mode];
+    if (mode in blending && this.defaultBlending !== blending[mode]) this.defaultBlending = blending[mode];
     return this;
   }
   clear () {
@@ -66,7 +66,6 @@ export class Renderer {
   renderInfo (lines, options) {
     const boxHeight = lines.length * 15; // 60
     this.ctx.font = options?.font || '10pt serif';
-    this.ctx.fillStyle = options?.bg?.color || '#444';
     let boxWidth = options?.minWidth || 0;
     if (options?.width) {
       boxWidth = options.width;
@@ -76,16 +75,16 @@ export class Renderer {
         boxWidth = (boxWidth < width) ? width : boxWidth;
       });
     }
-      
+
+    this.ctx.globalCompositeOperation = blending['normal'];
     this.ctx.globalAlpha = options?.bg?.alpha || 0.3;
-    // ctx.fillRect(canvas.width - boxWidth, 5, boxWidth, boxHeight);
+    this.ctx.fillStyle = options?.bg?.color || '#444';
     this.ctx.fillRect(5, 5, boxWidth + 10, boxHeight + 5);
     
     this.ctx.globalAlpha = options?.text?.alpha || 1;
     this.ctx.fillStyle = options?.text?.color || '#DDD';
     
     lines.forEach((line, index) => {
-      // ctx.fillText(line, canvas.width - 120, 20);
       this.ctx.fillText(line, 10, 20 + 15 * index);
     });
   }
@@ -105,13 +104,11 @@ export class Renderer {
     }
     if (this.drawDebug == 'body' && o.body) {
       this.ctx.strokeStyle = o.bodyColor || '#2F2';
-      this.ctx.beginPath();
       this.ctx.strokeRect(...o.body.calcBox());
     }
     if (this.drawDebug == 'sprite' && o.sprite) {
       const sizes = o.sprite.drawBox({x:o.x,y:o.y,size:o.size}); // [left,top,width,height]
       this.ctx.strokeStyle = '#28F';
-      this.ctx.beginPath();
       this.ctx.strokeRect(...sizes);
     }
   }

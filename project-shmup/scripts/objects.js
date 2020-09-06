@@ -89,6 +89,7 @@ export class Objects {
   process({now,delta}, {perItem} = {perItem: null}) {
     const prts = this.items;
     this.activeCount = 0;
+    let subActiveCount = 0;
     const normalizeDelta = 25; // 40 fps
     delta = Math.min(200, delta); //
     let subNow = now - delta;
@@ -103,10 +104,10 @@ export class Objects {
     const subStep = (i, {now, delta}) => {
       if (!(prts[i] && prts[i].active)) return;
       
+      subActiveCount++;
       // check collisions
       for (let j = i+1; j < prts.length; j++) {
         if (!(prts[j] && prts[j].active)) continue;
-        this.activeCount++;
         if (prts[i].body && prts[j].body && this.isTouching(prts[i].body.calc(), prts[j].body.calc())) {
           if (prts[i].touch) prts[i].touch(prts[j], now);
           if (prts[j].touch) prts[j].touch(prts[i], now);
@@ -129,5 +130,6 @@ export class Objects {
       subNow += subDelta;
       _subframes++;
     } while (subNow < now && _subframes < 10);
+    this.activeCount = subActiveCount;
   }
 }
