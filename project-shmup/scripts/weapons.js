@@ -64,15 +64,16 @@ export class Weapons {
             blend: 'additive',
             color: '#8ad4e4',
             size: 0.1,
-            ttl: now + 250,
-            step: function({now}) {
-              const timespan = Math.max(0, this.ttl - now) / 250;
-              this.size = 1+Math.max(0,1-timespan) * 3;
-              this.alpha = timespan ** 0.3;
-            }
           }, function () {
             this.vX = Math.random() * 500 - 250;
             this.vY = 500;
+            const randomTime = 100 + Math.random() * 150;
+            this.ttl = now + randomTime;
+            this.step = function({now}) {
+              const timespan = Math.max(0, this.ttl - now) / randomTime;
+              this.size = 1+Math.max(0,1-timespan) * 3;
+              this.alpha = timespan ** 0.5;
+            }
           });
         }
       })
