@@ -3,7 +3,7 @@
 - [ ] Global "do", organise engine like this:
       *Game*: {
         *Objects*: {
-          createSpace(), // add space for entities and provide other methods (currying)
+          createSpace(), // add space for entities and provide other methods
           add(), // adds one object into created space and returns it (player = Space.add({x,y,sprite...})
           addX(), // multiple
           static useBody(), // make object solid and enrich it with methods for collision checking, debug box drawing, etc...
@@ -23,3 +23,5 @@
       - [x] *.draw() - drawing on canvas
       - [x] *.drawBox() - drawing box edge for debugging (Game.debug.draw === 'spriteBox')
   - [ ] move all debug options/flags into Game.debug
+  - [ ] Input as stand-alone class
+  - [ ] rewrite rescale/reinit code

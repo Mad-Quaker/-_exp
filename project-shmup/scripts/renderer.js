@@ -44,17 +44,16 @@ export class Renderer {
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.fillRect(0, 0, this.width, this.height);
   }
-  switch (state) {
+  setOnOff (state) {
     if (state === this._draw) return;
     this._draw = state;
     const now = new Date;
     console.log(`${now.getHours()}:${now.getMinutes()}:${now.getSeconds()} - ${state?'resumed':'paused'}`);
   }
-  renderObjects (objects, {now, delta}, _perObject = (...a)=>this.draw(...a), _preObjects = undefined) {
+  renderObjects (objects, {now, delta}, _perObject = (...a)=>this.drawSpriteOrParticle(...a)) {
     if (!this._draw) return;
     const objectsLength = objects.length;
     for (let z = 0; z <= this.depth; z++) {
-      if (_preObjects) _preObjects(objects);
       for (let i = 0; i < objectsLength; i++) {
         if (!(objects[i] && objects[i].active)) continue; // skip inactive
         if (objects[i] && objects[i].z) {
@@ -91,25 +90,30 @@ export class Renderer {
   setAlpha(value) {
     this.alpha = value > 0 ? value : 1;
   }
-  draw(o, i, now, delta) {
-    this.ctx.globalAlpha = o.alpha === undefined ? this.defaultAlpha : o.alpha;
-    this.ctx.globalCompositeOperation = (o.blend && o.blend in blending) ? blending[o.blend] : blending[this.defaultBlending];
+  drawSpriteOrParticle(o, i, now, delta) {
+    const ctx = this.ctx;
+    ctx.globalAlpha = o.alpha === undefined ? this.defaultAlpha : o.alpha;
+    ctx.globalCompositeOperation = (o.blend && o.blend in blending) ? blending[o.blend] : blending[this.defaultBlending];
     if (o.sprite) {
-      this.ctx.drawImage(...o.sprite.draw({x: o.x, y: o.y, now: now - (o.phase || 0), size: o.size || 2}));
+      if (typeof o.sprite === 'string') {
+        ctx.drawImage(...this.atlas.list[o.sprite].draw({x: o.x, y: o.y, now: now - (o.phase || 0), size: o.size || 1}));
+      } else {
+        ctx.drawImage(...o.sprite.draw({x: o.x, y: o.y, now: now - (o.phase || 0), size: o.size || 1}));
+      }
     } else {
-      this.ctx.fillStyle = o.color || '#FFF';
-      this.ctx.beginPath();
-      this.ctx.arc(o.x, o.y, o.size, 0, 2*Math.PI);
-      this.ctx.fill();
+      ctx.fillStyle = o.color || '#FFF';
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, o.size, 0, 2*Math.PI);
+      ctx.fill();
     }
     if (this.drawDebug == 'body' && o.body) {
-      this.ctx.strokeStyle = o.bodyColor || '#2F2';
-      this.ctx.strokeRect(...o.body.calcBox());
+      ctx.strokeStyle = o.bodyColor || '#2F2';
+      ctx.strokeRect(...o.calcBox());
     }
     if (this.drawDebug == 'sprite' && o.sprite) {
-      const sizes = o.sprite.drawBox({x:o.x,y:o.y,size:o.size}); // [left,top,width,height]
-      this.ctx.strokeStyle = '#28F';
-      this.ctx.strokeRect(...sizes);
+      const sizes = o.sprite.drawBox({...o}); // [left,top,width,height]
+      ctx.strokeStyle = '#28F';
+      ctx.strokeRect(...sizes);
     }
   }
   drawPointer(pos) {

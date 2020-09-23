@@ -4,22 +4,12 @@ import { Renderer } from './renderer.js';
 import { Pointer } from './pointer.js';
 import { Weapons } from './weapons.js';
 import { Timer } from './timer.js';
-
-const randomF = Math.random; // alias
-const randomI = (value) => Math.round(randomF() * value);
-const randomA = function(...args) { // equaly weighted random pick
-  return args[Math.round(randomF() * args.length - 0.5)];
-}
-
-const switcher = function (states, callback) {
-  let selected = 0;
-  callback(states[selected]);
-  return function() {
-    selected++;
-    if (selected > states.length-1) selected = 0;
-    callback(states[selected]);
-  }
-}
+import {
+  randomF,
+  randomI,
+  randomA,
+  switcher,
+} from './utility.js';
 
 async function Init(document) {
   const debug = {
@@ -31,7 +21,7 @@ async function Init(document) {
     state: false, // false=paused, true=running
     visible: true,
     player: undefined, // player object in `Game.actors`
-    doodads: undefined, // non-physical objects/decorations (big decorations), no Z-ordering (0-9)
+    doodads: undefined, // non-physical objects/decorations (big decorations), no Z-ordering
     objects: undefined, // array of all active objects, with Z-ordering (0-9), bullets/projectiles included
     particles: undefined, // non-physical particles, small, shortliving, no Z-ordering
     pause() {
@@ -48,7 +38,7 @@ async function Init(document) {
   };
   renderer.timer = Game.time;
   // load and define sprites
-  const Sprites = new Atlas();
+  const Sprites = renderer.atlas = new Atlas();
   Sprites
     .load('./images/sprites.png', [
       { id:'st1', bounds: [  0,  0,  8,  8] }, // small white
@@ -80,8 +70,8 @@ async function Init(document) {
   Game.player = Game.objects.add({
     x: renderer.width / 2, y: renderer.height / 2 + 200,
     z: 8,
-    oX: renderer.width / 2, oY: renderer.height / 2 + 200,
-    sprite: Sprites.list.playerShip,
+    size: 1,
+    sprite: 'playerShip',
     nextBurst: Game.time.now + 100,
     oldBurst: Game.time.now,
     barrelsPos: function () { return { x: this.x, y: this.y - 10, spread: 50} },
@@ -237,16 +227,20 @@ async function Init(document) {
   document.addEventListener('mouseup', (e) => { if (pointer.isOn) pointer.handleUp(e) });
   document.addEventListener("visibilitychange", function() {
     Game.visible = document.visibilityState === 'visible';
-    renderer.switch(Game.visible);
+    renderer.setOnOff(Game.visible);
     if (Game.visible) Game.pause(); else Game.unpause();
   });
   const bodyDebug = switcher(['off','body','sprite'], (v)=>{renderer.drawDebug=v});
+  const rendererToggle = switcher([true,false], v=>renderer.setOnOff(v));
   document.addEventListener('keyup', function(e) {
     const now = Game.time.now;
+    // e.preventDefault();
     if (e.code === 'Digit1' && shooter.weaponId !== 'plasma') {
       shooter.switch('plasma',now);
     } else if (e.code === 'Digit2' && shooter.weaponId !== 'splash' && false) {
       shooter.switch('splash',now);
+    } else if (e.code === 'F4') {
+      rendererToggle();
     } else if (e.code === 'F2') {
       bodyDebug();
     } else if (e.code === 'KeyF') {

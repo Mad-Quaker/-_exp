@@ -1,7 +1,9 @@
+import { BaseObject } from "./baseObject.js";
+
 export class Objects {
   items = [];
   constructor (classname, max) {
-    this.classname = classname; // rewrite in 
+    this.classname = classname;
     this.activeCount = 0;
     this.cntMax = max;
     this.cntPointer = 0;
@@ -20,50 +22,14 @@ export class Objects {
     // f should not be an arrow function, it wouldn't work this way
     let cnt = 0;
     do {
-      let newItem = {
-        active: true,
-        x: 0, y: 0,
-        z: 5, // for rendering
-        alpha: 1, // opacity
-        vX: 0, vY: 0, // "V"elocity per axis
-        size: 1,
-        ...opts,
-      };
-      /* item = {
-       * active: boolean, // is it 
-       * x: float, y: float, // position (but should be relative on screen in future, just better fits for varying resolutions)
-       * vX: float, vY: float, 
-       * now: , // when created
-       * // advanced properties
-       * parent: item, // for collision (your bullets can't hit you)
-       * 
-       * 
-       * 
-       * 
-       * }
-       */
+      let newItem = new BaseObject({...opts});
       newItem.oX = newItem.x || 0;
       newItem.oY = newItem.y || 0;
       if (f) f.call(newItem, cnt, (count === 1 ? 1 : cnt / (count-1)));
-      if (newItem.body) { this.makeSolid(newItem); }
       this.#insert(newItem);
       cnt++;
     } while (cnt < count)
     return this;
-  }
-  makeSolid(item) {
-    item.body.calc = () => ({
-      left: item.x - item.body.width / 2,
-      right: item.x + item.body.width / 2,
-      top: item.y - item.body.height / 2,
-      bottom: item.y + item.body.height / 2,
-    });
-    item.body.calcBox = () => ([
-      item.x - item.body.width / 2, // left
-      item.y - item.body.height / 2, // right
-      item.body.width, // width
-      item.body.height, // height
-    ]);
   }
   #insert(item) {
     this.startedIndex = this.cntPointer;
@@ -108,7 +74,7 @@ export class Objects {
       // check collisions
       for (let j = i+1; j < prts.length; j++) {
         if (!(prts[j] && prts[j].active)) continue;
-        if (prts[i].body && prts[j].body && this.isTouching(prts[i].body.calc(), prts[j].body.calc())) {
+        if (prts[i].body && prts[j].body && this.isTouching(prts[i].calcBody(), prts[j].calcBody())) {
           if (prts[i].touch) prts[i].touch(prts[j], now);
           if (prts[j].touch) prts[j].touch(prts[i], now);
         }

@@ -6,7 +6,7 @@ export const randomA = function(...args) { // equaly weighted random pick
 
 export const switcher = function (states, callback) {
   let selected = 0;
-  callback(states[selected]);
+  callback(states[selected]); // force first state as default on creation;
   return function() {
     selected++;
     if (selected > states.length-1) selected = 0;

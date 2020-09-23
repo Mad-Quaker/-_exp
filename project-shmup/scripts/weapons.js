@@ -48,7 +48,7 @@ export class Weapons {
         this.touch = function (other, now) {
           if (other === this.parent || other.parent === this.parent) return;
           if (other.takeDamage) other.takeDamage(this, this.damage);
-          this.y = other.body.calc().bottom + this.body.height/2;
+          this.y = other.body.bottom + this.body.height/2;
           this.touch = undefined;
           // this.body = {width: 14, height: 24};
           this.sprite = sprites['plasmaBlueHit'];
