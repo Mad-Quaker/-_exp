@@ -206,7 +206,7 @@ async function Init(document) {
 
   function mouseMoveHandler(e) { pointer.onMove(e) }
   document.addEventListener('pointerlockchange', (e) => {
-    if(document.pointerLockElement === renderer.element) {
+    if(document.pointerLockElement === renderer.canvas) {
       document.addEventListener("mousemove", mouseMoveHandler, false);
       pointer.isOn = true;
       Game.unpause();
@@ -221,7 +221,7 @@ async function Init(document) {
   document.addEventListener('mousedown', (e) => { 
     if (!pointer.isOn) {
       // pointer.set([e.offsetX, e.offsetY]);
-      renderer.element.requestPointerLock();
+      renderer.canvas.requestPointerLock();
     }
     pointer.handleDown(e);
   });
@@ -245,7 +245,7 @@ async function Init(document) {
     } else if (e.code === 'F2') {
       bodyDebug();
     } else if (e.code === 'KeyF') {
-      renderer.element.requestFullscreen().catch(console.log);
+      renderer.canvas.requestFullscreen().catch(console.log);
     } else if (e.code === 'Escape' || e.code ==='KeyZ') {
       document.exitPointerLock();
       if (document.fullscreen) document.exitFullscreen();

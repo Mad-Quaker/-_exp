@@ -5,26 +5,65 @@ const blending = {
 };
 export class Renderer {
   constructor (options={}) {
-    const width = options.width || window.innerWidth;
-    const height = options.height || window.innerHeight;
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    document.body.appendChild(canvas);
-
-    this.blur = options.blur || false;
+    this.canvas = document.createElement('canvas');
+    document.body.appendChild(this.canvas);
+    window.addEventListener('resize', ()=>this.reset());
+    this.ctx = this.canvas.getContext('2d');
+    this.reset(options);
+    
     this._draw = true;
     this.defaultAlpha = 1.0;
     this.defaultBlending = 'normal';
     this.drawDebug = false;
     this.fullscreen = false;
-    this.element = canvas;
-    this.depth = options.depth || 9;
-    this.ctx = canvas.getContext('2d');
-    this.ctx.imageSmoothingEnabled = options.smoothing || false;
-    this.width = canvas.width;
-    this.height = canvas.height;
     return this;
+  }
+  configure(options){
+    const defaults = {
+      width: window.innerWidth, // target width
+      height: window.innerHeight, // target height
+      noUpScale: false, // can't resize canvas more than target size, decrease only
+      blur: false, // alpha for previous frame ()
+      depth: 9, // how many draw layers
+      smoothing: false, // smooth or sharp edges (for resized ctx.drawImage ???)
+    };
+    Object.keys(defaults).forEach(key=>{
+      if (options[key] !== undefined) this[key] = options[key];
+      if (this[key] === undefined) this[key] = defaults[key];
+    });
+    // this.targetSize = {
+      // width: options?.width !== undefined ? options.width : defaults.width,
+      // height: options?.height !== undefined ? options.height : defaults.height,
+    // };
+    // this.noUpScale = options?.noUpScale !== undefined ? options.noUpScale : defaults.noUpScale;
+    // this.blur = blur || this.blur || false;
+    // this.depth = depth || this.depth || 9;
+    // this.ctx.imageSmoothingEnabled = smoothing || this.ctx.imageSmoothingEnabled || false;
+  }
+  reset(options) {
+    if (options) this.configure(options);
+    const target = { width: this.width, height: this.height, ratio: this.width / this.height, scale: 1 };
+    const available = { width: window.innerWidth, height: window.innerHeight, ratio: window.innerWidth / window.innerHeight };
+    this.size = (target.ratio > available.ratio) ? 
+    {
+      width: available.width,
+      height: Math.round(available.width / target.ratio),
+      ratio: target.ratio,
+      scale: available.width / target.width,
+    } : {
+      height: available.height,
+      width: Math.round(available.height * target.ratio),
+      ratio: target.ratio,
+      scale: available.height / target.height,
+    };
+    if (this.noUpScale && this.size.scale > 1) {
+      this.canvas.width = target.width;
+      this.canvas.height = target.height;
+      this.size = target;
+    } else {
+      this.canvas.width = this.size.width;
+      this.canvas.height = this.size.height;
+    }
   }
   smoothing(value) {
     this.ctx.imageSmoothingEnabled = value || false;
@@ -34,8 +73,8 @@ export class Renderer {
     return this;
   }
   clear () {
-    if (this.blur === false) {
-      this.ctx.clearRect(0, 0, this.width, this.height);
+    if (!this.blur) {
+      this.ctx.clearRect(0, 0, this.size.width, this.size.height);
       return;
     }
     this.ctx.globalAlpha = this.blur || 0.8;
@@ -50,15 +89,15 @@ export class Renderer {
     const now = new Date;
     console.log(`${now.getHours()}:${now.getMinutes()}:${now.getSeconds()} - ${state?'resumed':'paused'}`);
   }
-  renderObjects (objects, {now, delta}, _perObject = (...a)=>this.drawSpriteOrParticle(...a)) {
+  renderObjects (objects, {now, delta}) {
     if (!this._draw) return;
     const objectsLength = objects.length;
     for (let z = 0; z <= this.depth; z++) {
       for (let i = 0; i < objectsLength; i++) {
         if (!(objects[i] && objects[i].active)) continue; // skip inactive
         if (objects[i] && objects[i].z) {
-          if (objects[i].z == z) _perObject(objects[i], i, now, delta);
-        } else if (z == 0) _perObject(objects[i], i, now, delta)
+          if (objects[i].z == z) this.drawSpriteOrParticle(objects[i], i, now, delta);
+        } else if (z == 0) this.drawSpriteOrParticle(objects[i], i, now, delta)
       }
     }
   }
@@ -91,16 +130,17 @@ export class Renderer {
     this.alpha = value > 0 ? value : 1;
   }
   drawSpriteOrParticle(o, i, now, delta) {
+    const scale = this.size.scale;
     const ctx = this.ctx;
     ctx.globalAlpha = o.alpha === undefined ? this.defaultAlpha : o.alpha;
     ctx.globalCompositeOperation = (o.blend && o.blend in blending) ? blending[o.blend] : blending[this.defaultBlending];
     if (o.sprite) {
       // if sprite defined as string - taking it from atlas. // should always come as string (id), keep it as a fallback
       const sprite = (typeof o.sprite === 'string') ? this.atlas.list[o.sprite] : o.sprite;
-      ctx.drawImage(...sprite.draw({x: o.x, y: o.y, now: now - (o.phase || 0), size: o.size || 1}));
+      ctx.drawImage(...sprite.draw({x: o.x, y: o.y, now: now - (o.phase || 0), size: o.size || 1, scale}));
       if (this.drawDebug == 'sprite') {
         ctx.strokeStyle = '#28F';
-        ctx.strokeRect(...sprite.drawBox({...o})); // [left,top,width,height]
+        ctx.strokeRect(...sprite.drawBox({...o, scale})); // [left,top,width,height]
       }
     } else {
       ctx.fillStyle = o.color || '#FFF';

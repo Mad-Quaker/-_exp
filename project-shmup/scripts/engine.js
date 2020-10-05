@@ -1,13 +1,15 @@
 import { Timer } from './timer.js';
 import { Atlas } from './atlas.js';
 import { Renderer } from './renderer.js';
-// import { objectsMap } from './objects/map.js'
+import { Objects } from './objects.js';
 
 const FPS_SMOOTHING = 0.25;
 const DEBUG_DATA = 1;
 
 // main engine class
 export class Engine  {
+  dimensions = []; // 
+
   constructor(options = {}, initFunction) {
     this._debug = {
       flags: 0,
@@ -19,7 +21,7 @@ export class Engine  {
     this.time = new Timer();
     this.renderer = new Renderer({smoothing: false, depth: 3, blur: false, ...(options?.renderer || {})});
     this.renderer.atlas = this.atlas = new Atlas();
-    this.objectMapping = objectsMap || { player: function player() {} };
+    // this.objectMapping = objectsMap || { player: function player() {} };
     // 
     this.init = initFunction;
     // init.call(this);
@@ -29,12 +31,21 @@ export class Engine  {
   tick(f) {
     this.gameTick = f;
   }
+
+  getSpaces() {
+    return Object.keys(this.dimensions);
+  }
+  newDimension(props) {
+    const objects = new Objects('Objects', props.limit)
+    this.dimensions.push(objects);
+    return objects;
+  }
   
   loop(prev) {
     this._debug.list = [];
     const {real, realDelta, now, delta} = this.time.calc(prev);
     this._sys.fps = Math.round(1000/delta);
-    requestAnimationFrame(()=>this.loop(this.time.now));
+    requestAnimationFrame(()=>this.loop(now));
     this.renderer.clear();
     this.gameTick({now, delta});
     // this.renderer();

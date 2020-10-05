@@ -5,7 +5,9 @@ import { Engine } from './engine.js';
 const Game = new Engine(
   {
     renderer: {
+      width: 960, height: 600, // target
       smoothing: false,
+      noUpScale: true,
     }
   },
   ()=>{
@@ -24,21 +26,29 @@ const Game = new Engine(
       .load('./images/star-ship.png', [
         { id: 'playerShip', bounds: [ 0, 0, 155, 108], bodyOffset: 'auto' }, // player ship
       ]);
-    objects = Game.newObjectSpace(); // newPlayground
-    objects.add('player') // calls ./objects/player.js@player() through objectLoader and add it into playspace
+    let objects = Game.newDimension({limit: 2000}); // aka newPlayground, space for objects
+    // objects.add('player') // calls ./objects/player.js@player() through objectLoader and add it into playspace
   }
 );
+
+window.addEventListener('keyup', (e) => {
+  // ## toggle upscale for test purpose
+  // if (e.code === 'F9') {
+  //   Game.renderer.reset({noUpScale: !Game.renderer.noUpScale});
+  //   console.log(Game.renderer.noUpScale)
+  // }
+});
 
 Game.tick(({now, delta})=> {
   Game.renderer.renderObjects([
     { // test fake sprite
-      active: true, x:130, y:130, z: 0,
+      active: true, x: 200 + Math.sin(now / 1000)* 100, y:200 + Math.cos(now / 1000)* 100, z: 0,
       sprite: Game.atlas.list['playerShip'],
     },
   ], {now,delta});
 
   Game._debug.list = [
-    `${Game._sys.fps} fps`,
+    `${Game._sys.fps} fps @ ${Game.renderer.size.width}x${Game.renderer.size.height} (${Math.round(Game.renderer.size.scale*100)}%)`,
   ];
 });
 
