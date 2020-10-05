@@ -126,7 +126,7 @@ async function Init(document) {
   }
 
   Game.player.step = ({now, delta}) => {
-    const damping = Math.pow(0.001,delta/1000);
+    const damping = Math.pow(0.0001,delta/1000);
     Game.player.vX = Game.player.vX * damping;
     Game.player.vY = Game.player.vY * damping;
     if (Game.player.x > renderer.width) Game.player.x = renderer.width;
@@ -256,8 +256,8 @@ async function Init(document) {
   function tick(prev = new Date().getTime()) {
     const {real, realDelta, now, delta} = Game.time.calc(prev);
     const mouseObj = pointer.get();
-    Game.player.vX = Game.player.vX + mouseObj.vX * 1; //
-    Game.player.vY = Game.player.vY + mouseObj.vY * 1; //
+    Game.player.vX = Game.player.vX + mouseObj.vX * 2; //
+    Game.player.vY = Game.player.vY + mouseObj.vY * 2; //
     
     window.requestAnimationFrame(()=>tick(real));
     
