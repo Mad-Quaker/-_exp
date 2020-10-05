@@ -83,17 +83,18 @@ export class Weapons {
       this.bullets.addX(100, {...position, now}, function(i,r) {
         const ang = r * 2 * Math.PI;
         const speed = 350 + Math.random() * 300;
+        // const speed = 100;
         this.vX = Math.cos(ang) * speed;
         this.vY = Math.sin(ang) * speed;
         this.ttl = now + 2000;
         this.size = 3;
         this.color = '#FC6';
-        this.step = function({now}) {
+        this.step = function({now, delta}) {
           const timespan = 1 - (this.ttl - now) / 2000;
           this.alpha = Math.pow((this.ttl - now) / 2000, 4);
           this.size = 30 - 27 * (this.ttl - now) / 2000;
-          this.vX *= Math.pow(0.05, delta / 1000);
-          this.vY *= Math.pow(0.05, delta / 1000);
+          this.vX *= Math.pow(0.1, delta / 1000);
+          this.vY *= Math.pow(0.1, delta / 1000);
         };
       })
     })        

@@ -95,10 +95,12 @@ export class Renderer {
     ctx.globalAlpha = o.alpha === undefined ? this.defaultAlpha : o.alpha;
     ctx.globalCompositeOperation = (o.blend && o.blend in blending) ? blending[o.blend] : blending[this.defaultBlending];
     if (o.sprite) {
-      if (typeof o.sprite === 'string') {
-        ctx.drawImage(...this.atlas.list[o.sprite].draw({x: o.x, y: o.y, now: now - (o.phase || 0), size: o.size || 1}));
-      } else {
-        ctx.drawImage(...o.sprite.draw({x: o.x, y: o.y, now: now - (o.phase || 0), size: o.size || 1}));
+      // if sprite defined as string - taking it from atlas. // should always come as string (id), keep it as a fallback
+      const sprite = (typeof o.sprite === 'string') ? this.atlas.list[o.sprite] : o.sprite;
+      ctx.drawImage(...sprite.draw({x: o.x, y: o.y, now: now - (o.phase || 0), size: o.size || 1}));
+      if (this.drawDebug == 'sprite') {
+        ctx.strokeStyle = '#28F';
+        ctx.strokeRect(...sprite.drawBox({...o})); // [left,top,width,height]
       }
     } else {
       ctx.fillStyle = o.color || '#FFF';
@@ -109,11 +111,6 @@ export class Renderer {
     if (this.drawDebug == 'body' && o.body) {
       ctx.strokeStyle = o.bodyColor || '#2F2';
       ctx.strokeRect(...o.calcBox());
-    }
-    if (this.drawDebug == 'sprite' && o.sprite) {
-      const sizes = o.sprite.drawBox({...o}); // [left,top,width,height]
-      ctx.strokeStyle = '#28F';
-      ctx.strokeRect(...sizes);
     }
   }
   drawPointer(pos) {

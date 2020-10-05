@@ -5,7 +5,7 @@ export class Timer {
     this.delta = 0; // scaled delta time per frame; (now - prev) * _scale
     this._scale = 1; // bullet time!
     this._paused = false;
-    this.sysNow = ()=>new Date().getTime();
+    this.sysNow = ()=>Date.now();
   }
   calc(prev = this.sysNow()) {
     this.real = this.sysNow();

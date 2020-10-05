@@ -126,11 +126,14 @@ async function Init(document) {
   }
 
   Game.player.step = ({now, delta}) => {
-    if (Game.player.dest) {
-      Game.player.vX = (Game.player.dest.x - Game.player.x) * 10;
-      Game.player.vY = (Game.player.dest.y - Game.player.y) * 10;
-    }
-    const burstCount = 1 + randomI(2 + Math.min(0, Game.player.vY) / -200);
+    const damping = Math.pow(0.001,delta/1000);
+    Game.player.vX = Game.player.vX * damping;
+    Game.player.vY = Game.player.vY * damping;
+    if (Game.player.x > renderer.width) Game.player.x = renderer.width;
+    if (Game.player.x < 0) Game.player.x = 0;
+    if (Game.player.y > renderer.height) Game.player.y = renderer.height;
+    if (Game.player.y < 0) Game.player.y = 0;
+    const burstCount = Math.min(1 + randomI(2 + Math.min(0, Game.player.vY) / -200), 10); // 10 as max
     if (Game.time.now > Game.player.oldBurst + 330 / burstCount && Game.particles) {
       const microOffset = [Game.player.x - Game.player.oX, Game.player.y - Game.player.oY];
       Game.particles.addX(burstCount, {}, function(i, r) {
@@ -200,9 +203,7 @@ async function Init(document) {
   });
   pointer.handleDown = (e) => fireOn = true;
   pointer.handleUp = (e) => fireOn = false;
-  pointer.handleMove = (e) => {
-    Game.player.dest = {x: e.x, y: e.y};
-  };
+
   function mouseMoveHandler(e) { pointer.onMove(e) }
   document.addEventListener('pointerlockchange', (e) => {
     if(document.pointerLockElement === renderer.element) {
@@ -254,6 +255,9 @@ async function Init(document) {
   
   function tick(prev = new Date().getTime()) {
     const {real, realDelta, now, delta} = Game.time.calc(prev);
+    const mouseObj = pointer.get();
+    Game.player.vX = Game.player.vX + mouseObj.vX * 1; //
+    Game.player.vY = Game.player.vY + mouseObj.vY * 1; //
     
     window.requestAnimationFrame(()=>tick(real));
     
@@ -275,7 +279,7 @@ async function Init(document) {
       // const realActiveParticles = Game.particles.items.reduce((a,c)=>a+(c && c.active ? 1 : 0),0);
 
       // layer with text
-      if (renderer.drawDebug)
+      // if (renderer.drawDebug !== 'off')
         renderer.renderInfo([
           `[${pointer.pos.x}, ${pointer.pos.y}] + [${Math.round(Game.player.vX)},${Math.round(Game.player.vY)}]`,
           `${realDelta}ms - ${Math.floor(1000/realDelta)} FPS`,
