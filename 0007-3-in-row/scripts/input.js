@@ -10,24 +10,27 @@ class Input {
   logging = 1;
 
   constructor ($rootElement, log) {
-    $rootElement.addEventListener('contextmenu', (e)=>e.preventDefault()); // disable context menu
-    $rootElement.addEventListener('mousedown', (e) => this._handleMouse(INPUT_DOWN, e));
-    $rootElement.addEventListener('mouseup', (e) => this._handleMouse(INPUT_UP, e));
-    $rootElement.addEventListener('mousemove', (e) => this._handleMouse(INPUT_MOVE, e));
-    $rootElement.addEventListener('wheel', (e) => this._handleMouse(INPUT_WHEEL, e));
-    $rootElement.addEventListener('keydown', (e) => this._handleKeyboard(INPUT_KEYDOWN, e));
-    $rootElement.addEventListener('keyup', (e) => this._handleKeyboard(INPUT_KEYUP, e));
-    this.isOn = false;
-    document.addEventListener('pointerlockchange', (e) => {
-      if(document.pointerLockElement === document.body) {
-        console.log('ON');
-        this.isOn = true;
-      } else {
-        console.log('OFF');
-        this.isOn = false;
-        document.exitPointerLock();
-      }
+    
+    document.addEventListener('mousedown', (e) => {
+      if (e.button === 0 && !this.isOn) document.body.requestPointerLock();
     });
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Escape' && this.isOn) document.exitPointerLock();
+    });
+    document.addEventListener('pointerlockerror', (e) => {
+      console.log('No!');
+    });
+    document.addEventListener('pointerlockchange', (e) => {
+      this.isOn = document.pointerLockElement === document.body;
+      // console.log(this.isOn, document.pointerLockElement);
+    });
+    this.isOn = false;
+    document.addEventListener('mousedown', (e) => this._handleMouse(INPUT_DOWN, e));
+    document.addEventListener('mouseup', (e) => this._handleMouse(INPUT_UP, e));
+    document.addEventListener('mousemove', (e) => this._handleMouse(INPUT_MOVE, e));
+    document.addEventListener('wheel', (e) => this._handleMouse(INPUT_WHEEL, e));
+    document.addEventListener('keydown', (e) => this._handleKeyboard(INPUT_KEYDOWN, e));
+    document.addEventListener('keyup', (e) => this._handleKeyboard(INPUT_KEYUP, e));
   }
 
   _log(log) { this.logging = log; }
@@ -49,18 +52,23 @@ class Input {
     if (type !== INPUT_WHEEL && e?.code !== 'F5' && e?.code !== 'Escape') e.preventDefault();
     const keyboard = {
       code: e.code,
+      mods: {
+        ctrl: e.ctrlKey,
+        alt: e.altKey,
+        shift: e.shiftKey,
+        win: e.metaKey,
+      },
     }
-    if (e.code === 'Escape' || e.code ==='KeyZ') {
+    if (e.code === 'Escape' || e.code ==='AltLeft') {
       window.document.exitPointerLock();
-      if (window.document.fullscreen) document.exitFullscreen();
+      // if (window.document.fullscreen) window.document.exitFullscreen();
     }
+    if (this.logging) console.log(keyboard); // 
   }
 
   _handleMouse(type, e) {
     if (type !== INPUT_WHEEL) e.preventDefault();
-    if (!this.isOn && type == INPUT_DOWN) {
-      window.document.body.requestPointerLock();
-    }
+    if (!this.isOn) return;
     const mouse = {
       button: e.button,
       buttons: [
