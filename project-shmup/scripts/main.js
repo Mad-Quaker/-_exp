@@ -1,15 +1,10 @@
 import { Objects } from './objects.js';
 import { Atlas } from './atlas.js';
 import { Renderer } from './renderer.js';
-import { Pointer } from './pointer.js';
+import { Mouse } from './mouse.js';
 import { Weapons } from './weapons.js';
 import { Timer } from './timer.js';
-import {
-  randomF,
-  randomI,
-  randomA,
-  switcher,
-} from './utility.js';
+import { randomF, randomI, randomA, switcher } from './utility.js';
 
 async function Init(document) {
   const debug = {
@@ -197,9 +192,8 @@ async function Init(document) {
   let fireOn = false;
 
   // Input
-  const pointer = Pointer({
+  const pointer = Mouse({
     pos: {x: Game.player.x,y: Game.player.y},
-    bounds: { left: 0, right: renderer.width, top: 0, bottom: renderer.height },
   });
   pointer.handleDown = (e) => fireOn = true;
   pointer.handleUp = (e) => fireOn = false;

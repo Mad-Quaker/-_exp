@@ -23,5 +23,5 @@
       - [x] *.draw() - drawing on canvas
       - [x] *.drawBox() - drawing box edge for debugging (Game.debug.draw === 'spriteBox')
   - [ ] move all debug options/flags into Game.debug
-  - [ ] Input as stand-alone class
-  - [ ] rewrite rescale/reinit code
+  - [x] Input as stand-alone class
+  - [x] rewrite rescale/reinit code

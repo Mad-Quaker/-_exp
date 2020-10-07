@@ -31,14 +31,6 @@ export class Renderer {
       if (options[key] !== undefined) this[key] = options[key];
       if (this[key] === undefined) this[key] = defaults[key];
     });
-    // this.targetSize = {
-      // width: options?.width !== undefined ? options.width : defaults.width,
-      // height: options?.height !== undefined ? options.height : defaults.height,
-    // };
-    // this.noUpScale = options?.noUpScale !== undefined ? options.noUpScale : defaults.noUpScale;
-    // this.blur = blur || this.blur || false;
-    // this.depth = depth || this.depth || 9;
-    // this.ctx.imageSmoothingEnabled = smoothing || this.ctx.imageSmoothingEnabled || false;
   }
   reset(options) {
     if (options) this.configure(options);
