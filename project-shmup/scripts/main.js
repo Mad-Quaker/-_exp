@@ -10,7 +10,7 @@ async function Init(document) {
   const debug = {
     showPointer: false,
   };
-  const renderer = new Renderer({ noUpScale: true, smoothing: false, depth: 9, blur: 0.8});
+  const renderer = new Renderer({ /* width: 960, height: 600, */ noUpScale: true, smoothing: false, depth: 9, blur: 0.8});
   // key entities ref
   let Game = {
     state: false, // false=paused, true=running
@@ -63,7 +63,7 @@ async function Init(document) {
   // entities
   Game.objects = new Objects('Objects', 2000);
   Game.player = Game.objects.add({
-    x: renderer.width / 2, y: renderer.height / 2 + 200,
+    x: renderer.width / 2, y: renderer.height * 0.55,
     z: 8,
     size: 1,
     sprite: 'playerShip',

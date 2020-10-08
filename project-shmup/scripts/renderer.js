@@ -62,8 +62,9 @@ export class Renderer {
       this.canvas.width = this.size.width;
       this.canvas.height = this.size.height;
     }
+    this.setSmoothing(this.smoothing);
   }
-  smoothing(value) {
+  setSmoothing(value) {
     this.ctx.imageSmoothingEnabled = value || false;
   }
   blendMode(mode) {
@@ -79,7 +80,7 @@ export class Renderer {
     this.ctx.globalCompositeOperation = 'source-over';
     this.ctx.fillStyle = '#000';
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    this.ctx.fillRect(0, 0, this.width, this.height);
+    this.ctx.fillRect(0, 0, this.size.width, this.size.height);
   }
   setOnOff (state) {
     if (state === this._draw) return;
@@ -146,7 +147,7 @@ export class Renderer {
     } else {
       ctx.fillStyle = o.color || '#FFF';
       ctx.beginPath();
-      ctx.arc(o.x, o.y, o.size, 0, 2*Math.PI);
+      ctx.arc(o.x * this.size.scale, o.y * this.size.scale, o.size, 0, 2*Math.PI);
       ctx.fill();
     }
     if (this.drawDebug == 'body' && o.body) {
