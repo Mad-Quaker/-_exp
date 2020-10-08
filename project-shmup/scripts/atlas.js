@@ -14,15 +14,15 @@ export class Atlas {
           if (!id) { throw Error(`'${url}'[${i}]: no 'id' provided`) };
           const [offsetX,offsetY,width,height,centerOX,centerOY] = bounds;
           this.list[id] = {
-            drawBox: function({x,y,size=1,scale=1}) { // ctx.strokeRect(...sprite.drawBox());
+            drawBox: function({x,y,size=1}) { // ctx.strokeRect(...sprite.drawBox());
               return [
-                (x - width * size / 2) * scale, // left
-                (y - height * size / 2) * scale, // right
-                (width * size) * scale, // width
-                (height * size) * scale, // height              
+                x - width * size / 2, // left
+                y - height * size / 2, // right
+                width * size, // width
+                height * size, // height              
               ];
             },
-            draw: function({x,y,size=1,now,scale=1}){
+            draw: function({x,y,size=1,now}){
               const currentFrameOffset = (now = 0) => {
                 if (!animate) return 0;
                 const msPerFrame = 1000 / animate.fps; // 1000 / 10 = 100ms
@@ -33,10 +33,10 @@ export class Atlas {
               return [image, 
                 offsetX + currentFrameOffset(now), offsetY, width, height,
                 ...[
-                  (x-width*size/2-(centerOX||0)) * scale,
-                  (y-height*size/2-(centerOY||0)) * scale,
-                  (width*size) * scale,
-                  (height*size) * scale,
+                  x-width*size/2-(centerOX||0),
+                  y-height*size/2-(centerOY||0),
+                  width*size,
+                  height*size,
                 ].map(Math.floor)];
             },
           };

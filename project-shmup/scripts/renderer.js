@@ -10,6 +10,7 @@ export class Renderer {
     window.addEventListener('resize', ()=>this.reset());
     this.ctx = this.canvas.getContext('2d');
     this.reset(options);
+    document.addEventListener('fullscreenchange', e => { this.fullscreen = document.fullscreen; });
     
     this._draw = true;
     this.defaultAlpha = 1.0;
@@ -34,7 +35,12 @@ export class Renderer {
   }
   reset(options) {
     if (options) this.configure(options);
-    const target = { width: this.width, height: this.height, ratio: this.width / this.height, scale: 1 };
+    const target = { 
+      width: this.width || window.innerWidth,
+      height: this.height || window.innerHeight,
+      ratio: (this.width || window.innerWidth) / (this.height || window.innerHeight),
+      scale: 1,
+    };
     const available = { width: window.innerWidth, height: window.innerHeight, ratio: window.innerWidth / window.innerHeight };
     this.size = (target.ratio > available.ratio) ? 
     {
@@ -122,17 +128,20 @@ export class Renderer {
     this.alpha = value > 0 ? value : 1;
   }
   drawSpriteOrParticle(o, i, now, delta) {
-    const scale = this.size.scale;
     const ctx = this.ctx;
+    const rescale = (v) => v * this.size.scale;
     ctx.globalAlpha = o.alpha === undefined ? this.defaultAlpha : o.alpha;
     ctx.globalCompositeOperation = (o.blend && o.blend in blending) ? blending[o.blend] : blending[this.defaultBlending];
     if (o.sprite) {
       // if sprite defined as string - taking it from atlas. // should always come as string (id), keep it as a fallback
       const sprite = (typeof o.sprite === 'string') ? this.atlas.list[o.sprite] : o.sprite;
-      ctx.drawImage(...sprite.draw({x: o.x, y: o.y, now: now - (o.phase || 0), size: o.size || 1, scale}));
+      const spriteDrawArgs = sprite.draw({x: o.x, y: o.y, now: now - (o.phase || 0), size: o.size || 1});
+      // rescale those args for ctx.drawImage()
+      [5,6,7,8].map(arg=>spriteDrawArgs[arg]=rescale(spriteDrawArgs[arg]));
+      ctx.drawImage(...spriteDrawArgs); // ... and drop it here
       if (this.drawDebug == 'sprite') {
         ctx.strokeStyle = '#28F';
-        ctx.strokeRect(...sprite.drawBox({...o, scale})); // [left,top,width,height]
+        ctx.strokeRect(...sprite.drawBox({...o}).map(rescale)); // [left,top,width,height].rescaled !!
       }
     } else {
       ctx.fillStyle = o.color || '#FFF';
@@ -142,7 +151,7 @@ export class Renderer {
     }
     if (this.drawDebug == 'body' && o.body) {
       ctx.strokeStyle = o.bodyColor || '#2F2';
-      ctx.strokeRect(...o.calcBox());
+      ctx.strokeRect(...o.calcBox().map(rescale));
     }
   }
   drawPointer(pos) {

@@ -24,6 +24,6 @@
       - [x] *.drawBox() - drawing box edge for debugging (Game.debug.draw === 'spriteBox')
   - [ ] move all debug options/flags into Game.debug
   - [x] Input as stand-alone class
-    - [ ] filter keydown repeating
-    - [ ] .. and probably some key-combinations check (CtrlLeft+KeyA, ShiftLeft+AltLeft+KeyW) implementation with keyPressedList ... low priority feature
+    - [x] filter keydown repeating
+    - [x] .. and probably some key-combinations check (CtrlLeft+KeyA, ShiftLeft+AltLeft+KeyW) implementation with keyPressedList
   - [x] rewrite rescale/reinit code

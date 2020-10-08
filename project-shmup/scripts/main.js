@@ -1,7 +1,7 @@
 import { Objects } from './objects.js';
 import { Atlas } from './atlas.js';
 import { Renderer } from './renderer.js';
-import { Mouse } from './mouse.js';
+import { Input } from './input.js';
 import { Weapons } from './weapons.js';
 import { Timer } from './timer.js';
 import { randomF, randomI, randomA, switcher } from './utility.js';
@@ -10,7 +10,7 @@ async function Init(document) {
   const debug = {
     showPointer: false,
   };
-  const renderer = new Renderer({smoothing: false, depth: 9, blur: 0.8});
+  const renderer = new Renderer({ noUpScale: true, smoothing: false, depth: 9, blur: 0.8});
   // key entities ref
   let Game = {
     state: false, // false=paused, true=running
@@ -186,40 +186,18 @@ async function Init(document) {
       }
     });
 
-  const shooter = new Weapons(Game.objects, Game.particles);
+  const shooter = new Weapons(Game.objects, Game.particles, Game.time);
   shooter.sprites.plasmaBlue = Sprites.list.plasmaBlue;
   shooter.sprites.plasmaBlueHit = Sprites.list.plasmaBlueHit;
   let fireOn = false;
 
   // Input
-  const pointer = Mouse({
-    pos: {x: Game.player.x,y: Game.player.y},
+  const input = new Input({
+    contextDisabled: true,
+    lockable: true,
+    onLockChange: (on)=> Game.time.scale(on ? 1 : 0.1),
   });
-  pointer.handleDown = (e) => fireOn = true;
-  pointer.handleUp = (e) => fireOn = false;
 
-  function mouseMoveHandler(e) { pointer.onMove(e) }
-  document.addEventListener('pointerlockchange', (e) => {
-    if(document.pointerLockElement === renderer.canvas) {
-      document.addEventListener("mousemove", mouseMoveHandler, false);
-      pointer.isOn = true;
-      Game.unpause();
-    } else {
-      document.removeEventListener("mousemove", mouseMoveHandler, false);
-      Game.pause();
-      pointer.isOn = false;
-      document.exitPointerLock();
-    }
-  });
-  // document.addEventListener('pointerlockerror', console.log);
-  document.addEventListener('mousedown', (e) => { 
-    if (!pointer.isOn) {
-      // pointer.set([e.offsetX, e.offsetY]);
-      renderer.canvas.requestPointerLock();
-    }
-    pointer.handleDown(e);
-  });
-  document.addEventListener('mouseup', (e) => { if (pointer.isOn) pointer.handleUp(e) });
   document.addEventListener("visibilitychange", function() {
     Game.visible = document.visibilityState === 'visible';
     renderer.setOnOff(Game.visible);
@@ -227,36 +205,23 @@ async function Init(document) {
   });
   const bodyDebug = switcher(['off','body','sprite'], (v)=>{renderer.drawDebug=v});
   const rendererToggle = switcher([true,false], v=>renderer.setOnOff(v));
-  document.addEventListener('keyup', function(e) {
-    const now = Game.time.now;
-    // e.preventDefault();
-    if (e.code === 'Digit1' && shooter.weaponId !== 'plasma') {
-      shooter.switch('plasma',now);
-    } else if (e.code === 'Digit2' && shooter.weaponId !== 'splash' && false) {
-      shooter.switch('splash',now);
-    } else if (e.code === 'F4') {
-      rendererToggle();
-    } else if (e.code === 'F2') {
-      bodyDebug();
-    } else if (e.code === 'KeyF') {
-      renderer.canvas.requestFullscreen().catch(console.log);
-    } else if (e.code === 'Escape' || e.code ==='KeyZ') {
-      document.exitPointerLock();
-      if (document.fullscreen) document.exitFullscreen();
-    }
-  });
-  document.addEventListener('fullscreenchange', e => { renderer.fullscreen = document.fullscreen; });
+  
+  input.bind('F4', (e)=>{ if (e.down) rendererToggle() })
+  .bind('F2', (e)=>{ if (e.down) bodyDebug(); })
+  .bind('Digit1', (e)=>{ if (e.down) shooter.switch('plasma') })
+  .bind('Digit2', (e)=>{ if (e.down) shooter.switch('splash') })
+  .bind('KeyF', (e)=>{ if (e.down) renderer.canvas.requestFullscreen().catch(console.log)})
   
   function tick(prev = new Date().getTime()) {
     const {real, realDelta, now, delta} = Game.time.calc(prev);
-    const mouseObj = pointer.get();
-    Game.player.vX = Game.player.vX + mouseObj.vX * 2; //
-    Game.player.vY = Game.player.vY + mouseObj.vY * 2; //
+    const mouseState = input.mouse.getState();
+    Game.player.vX = Game.player.vX + mouseState.vX * 2; //
+    Game.player.vY = Game.player.vY + mouseState.vY * 2; //
     
     window.requestAnimationFrame(()=>tick(real));
     
     // Process part    
-    if (fireOn) shooter.shoot({now, delta}, Game.player.barrelsPos(), Game.player);
+    if (input.mouse.isButtonHeld(0)) shooter.shoot({now, delta}, Game.player.barrelsPos(), Game.player);
     asteroidSpawner();
 
     Game.doodads.process({now,delta});
@@ -275,9 +240,9 @@ async function Init(document) {
       // layer with text
       // if (renderer.drawDebug !== 'off')
         renderer.renderInfo([
-          `[${pointer.pos.x}, ${pointer.pos.y}] + [${Math.round(Game.player.vX)},${Math.round(Game.player.vY)}]`,
+          `[${mouseState.x}, ${mouseState.y}] + [${Math.round(Game.player.vX)},${Math.round(Game.player.vY)}]`,
           `${realDelta}ms - ${Math.floor(1000/realDelta)} FPS`,
-          pointer.isOn ? "Lock ✔" : 'Lock',
+          input.isFocused ? "Lock ✔" : 'Lock',
           'Fullscreen - ' + (renderer.fullscreen?'ON':'OFF'),
           shooter.weaponId,
           `Active obj(${Game.objects.activeCount}), fx(${Game.particles.activeCount})`,
@@ -286,7 +251,7 @@ async function Init(document) {
     }
       
     // drawing pointer(mouse)
-    if (debug.showPointer && pointer.isOn) renderer.drawPointer(pointer.pos);
+    if (debug.showPointer && input.isFocused) renderer.drawPointer(input.mouse.pos);
   }
   tick();
 }

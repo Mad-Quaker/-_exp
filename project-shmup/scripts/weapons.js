@@ -4,7 +4,7 @@ export class Weapons {
   weapons = [];
   weaponId = undefined;
   fireCooldown = false;
-  constructor (bulletsScope, particlesScope) {
+  constructor (bulletsScope, particlesScope, time) {
     if (!bulletsScope || !particlesScope) throw Error("Objects['Actors'] and Objects['Particles'] should be provided for new Weapons(bullets, particles)!");
     this.selected = 'plasma';
     this.switchDelay = 500;
@@ -12,13 +12,14 @@ export class Weapons {
     this.bullets = bulletsScope;
     this.particles = particlesScope;
     this.sprites = {};
+    this.time = time;
     this.init();
   }
   add (weaponId, options, _F) {
     this.weapons[weaponId] = { ...options, fire: _F};
     if (this.weaponId === undefined) this.weaponId = weaponId;
   }
-  switch (weaponId, {now}) { this.weaponId = weaponId; this.fireCooldown = now + this.switchDelay };
+  switch (weaponId) { this.weaponId = weaponId; this.fireCooldown = this.time.now + this.switchDelay };
   shoot ({now, delta, _scale}, position, parent) {
     if (this.weaponId === undefined || this.fireCooldown > now) return;
     this.weapons[this.weaponId].fire({now, delta}, position, parent);
