@@ -16,6 +16,8 @@
         *Time*: {}, // Don't know how and what's here exactly, but it point of time calc's, sync engine parts/modules into one and similar stuff. Somethingsomething...
       }
   - [ ] base *Object* class for entities describing what props/methods it could/should have for in-game interaction and engine internal processes
+  - [ ] separate *Objects* and *Sprites*
+    - [ ] code some methods for *t* sprites animations - relative to linked (parent) *objects*
   - [x] refactor Atlas:
     - [x] all sprites loaded with *Atlas.load(url, spritesDefinitions)*
     - [x] accessible with *Atlas.list[spriteID]*
