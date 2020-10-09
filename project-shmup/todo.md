@@ -17,7 +17,7 @@
       }
   - [ ] base *Object* class for entities describing what props/methods it could/should have for in-game interaction and engine internal processes
   - [ ] separate *Objects* and *Sprites*
-    - [ ] code some methods for *t* sprites animations - relative to linked (parent) *objects*
+    - [ ] code some methods for *t* sprites animations - relative to linked (parent) *objects* (*joints-functions*)
   - [x] refactor Atlas:
     - [x] all sprites loaded with *Atlas.load(url, spritesDefinitions)*
     - [x] accessible with *Atlas.list[spriteID]*

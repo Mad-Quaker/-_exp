@@ -1,3 +1,5 @@
+import { Atlas } from './atlas.js';
+
 const blending = {
   "normal" : "source-over",
   "additive" : "screen",
@@ -5,6 +7,8 @@ const blending = {
 };
 export class Renderer {
   constructor (options={}) {
+    this.atlas = new Atlas();
+    
     this.canvas = document.createElement('canvas');
     document.body.appendChild(this.canvas);
     window.addEventListener('resize', ()=>this.reset());
@@ -71,6 +75,18 @@ export class Renderer {
     if (mode in blending && this.defaultBlending !== blending[mode]) this.defaultBlending = blending[mode];
     return this;
   }
+  loadBundle(url) {
+    fetch(url).then(
+      bundle => bundle.json().then(bundle=> {
+        Object.keys(bundle).forEach(imageURL => {
+          this.atlas.load(imageURL, bundle[imageURL]);
+        })
+      }),
+      error => { throw Error(error) },
+    )
+    return this;
+  }
+  async isReady() { return await this.atlas.isLoaded() }
   clear () {
     if (!this.blur) {
       this.ctx.clearRect(0, 0, this.size.width, this.size.height);
@@ -134,11 +150,10 @@ export class Renderer {
     ctx.globalAlpha = o.alpha === undefined ? this.defaultAlpha : o.alpha;
     ctx.globalCompositeOperation = (o.blend && o.blend in blending) ? blending[o.blend] : blending[this.defaultBlending];
     if (o.sprite) {
-      // if sprite defined as string - taking it from atlas. // should always come as string (id), keep it as a fallback
-      const sprite = (typeof o.sprite === 'string') ? this.atlas.list[o.sprite] : o.sprite;
-      const spriteDrawArgs = sprite.draw({x: o.x, y: o.y, now: now - (o.phase || 0), size: o.size || 1});
-      // rescale those args for ctx.drawImage()
-      [5,6,7,8].map(arg=>spriteDrawArgs[arg]=rescale(spriteDrawArgs[arg]));
+      const sprite = this.atlas.list[o.sprite];
+      if (!sprite) { return; }
+      const spriteDrawArgs = sprite.draw({x: o.x, y: o.y, now: now - (o.phase || 0), size: o.size || 1}); // generate args for ctx.drawImage() with provided function
+      [5,6,7,8].map(arg=>spriteDrawArgs[arg]=rescale(spriteDrawArgs[arg])); // rescale some of args
       ctx.drawImage(...spriteDrawArgs); // ... and drop it here
       if (this.drawDebug == 'sprite') {
         ctx.strokeStyle = '#28F';

@@ -11,7 +11,6 @@ export class Weapons {
     this.fireCooldown = 0;
     this.bullets = bulletsScope;
     this.particles = particlesScope;
-    this.sprites = {};
     this.time = time;
     this.init();
   }
@@ -29,7 +28,6 @@ export class Weapons {
     const particles = this.particles;
     // weapon - 1 - plasma
     this.add('plasma', {shotsPerSec: 10}, ({now,delta}, position, parent) => {
-      const sprites = this.sprites;
       this.bullets.addX(2, {...position, now, z: 8, size: 2, blending: 'additive', parent, damage: 20 }, function(i,r) {
         // this.y = this.y - r * 8;
         // this.x = this.x + (r*20-10);
@@ -43,7 +41,7 @@ export class Weapons {
         this.vY = -1500;
         this.ttl = now + 700;
         this.alpha = 1;
-        this.sprite = sprites['plasmaBlue'];
+        this.sprite = 'plasmaBlue';
         this.blend = 'additive';
         this.body = {width: 14, height: 24};
         this.touch = function (other, now) {
@@ -52,7 +50,7 @@ export class Weapons {
           this.y = other.body.bottom + this.body.height/2;
           this.touch = undefined;
           // this.body = {width: 14, height: 24};
-          this.sprite = sprites['plasmaBlueHit'];
+          this.sprite = 'plasmaBlueHit';
           this.bodyColor = '#F00';
           this.phase = now;
           // this.size = 2;

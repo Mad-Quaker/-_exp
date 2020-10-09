@@ -1,5 +1,4 @@
 import { Timer } from './timer.js';
-import { Atlas } from './atlas.js';
 import { Renderer } from './renderer.js';
 import { Objects } from './objects.js';
 
@@ -20,7 +19,7 @@ export class Engine  {
     };
     this.time = new Timer();
     this.renderer = new Renderer({smoothing: false, depth: 3, blur: false, ...(options?.renderer || {})});
-    this.renderer.atlas = this.atlas = new Atlas();
+    this.atlas = this.renderer.atlas;
     // this.objectMapping = objectsMap || { player: function player() {} };
     // 
     this.init = initFunction;

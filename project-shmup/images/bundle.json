@@ -1,0 +1,25 @@
+{
+  "./images/sprites.png": [
+    { "id": "st1", "bounds": [  0,  0,  8,  8] },
+    { "id": "st2", "bounds": [  8,  0,  8,  8] },
+    { "id": "st3", "bounds": [  0,  8,  8,  8] },
+    { "id": "st4", "bounds": [ 16,  0, 16, 16] },
+    { "id": "st5", "bounds": [  8,  8,  8,  8] },
+    { "id": "spark1", "bounds": [  0, 16,  4, 32] },
+    { "id": "spark2", "bounds": [  4, 16,  4, 32] }
+  ],
+  "./images/asteroids.png": [
+    { "id": "asteroid1", "bounds": [ 0, 0, 56, 48] },
+    { "id": "asteroid2", "bounds": [ 0, 48, 112, 80] }
+  ],
+  "./images/projectiles.png": [
+    { "id": "plasmaBlue", "bounds": [ 0, 0, 8, 16] },
+    { "id": "plasmaBlueHit", "bounds": [ 8, 0, 16, 8], "animate": { "frames": 3, "fps": 30} }
+  ],
+  "./images/star-ship.png": [
+    { "id": "playerShip", "bounds": [ 0, 0, 155, 108], "bodyOffset": "auto" }
+  ],
+  "./images/star-ship-fire.png": [
+    { "id": "playerBurst", "bounds": [0,0,16,32], "animate": { "frames": 6, "fps": 20 }, "bodyOffset": "auto" }
+  ]
+}

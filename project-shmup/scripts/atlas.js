@@ -1,11 +1,10 @@
 export class Atlas {
   constructor() {
-    this.err = [];
+    this.errors = [];
     this.list = {};
     this._promises = [];
   }
-
-
+  
   load(url, defs) {
     const image = new Image();
     this._promises.push(new Promise((resolve,reject) => {
@@ -46,15 +45,11 @@ export class Atlas {
       image.onerror = err=>{
         const error = `'${url}': ${err}`;
         this.errors.push(error);
-        reject(false);
+        resolve(false);
       }
     }));
     image.src = url;
     return this;
   }
-
-  isLoaded() { // pass only when loaded
-    return Promise.all(this._promises).then(()=>true, (error)=>{ throw Error(error); });
-  }
-
+  async isLoaded() { return await Promise.all(this._promises) }
 }
