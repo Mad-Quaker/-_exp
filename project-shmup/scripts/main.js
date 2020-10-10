@@ -46,17 +46,47 @@ Game.player = Game.objects.add({
   body: { width: 80, height: 80},
 });
 Game.player.burst = Game.objects.add({
-  x: Game.player.x+1,
-  y: Game.player.y+70,
+  x: 1,
+  y: 70,
   z: 9,
   size: 1,
   blend: 'additive',
   sprite: 'playerBurst',
-  step: function() {
-    this.x = Game.player.x+1;
-    this.y = Game.player.y+70;
-  }
+  parent: Game.player,
 });
+Game.player.step = ({now, delta}) => {
+  const damping = Math.pow(0.0001,delta/1000);
+  Game.player.vX = Game.player.vX * damping;
+  Game.player.vY = Game.player.vY * damping;
+  if (Game.player.x > renderer.width) Game.player.x = renderer.width;
+  if (Game.player.x < 0) Game.player.x = 0;
+  if (Game.player.y > renderer.height) Game.player.y = renderer.height;
+  if (Game.player.y < 0) Game.player.y = 0;
+  const burstCount = Math.min(1 + randomI(2 + Math.min(0, Game.player.vY) / -200), 10); // 10 as max
+  if (Game.time.now > Game.player.oldBurst + 330 / burstCount && Game.particles) {
+    const microOffset = [Game.player.x - Game.player.oX, Game.player.y - Game.player.oY];
+    Game.particles.addX(burstCount, {}, function(i, r) {
+      this.x = Game.player.x + randomF() * 19 - 9 + microOffset[0] * r;
+      this.y = Game.player.y - randomF() * 20 + 70 + microOffset[1] * r;
+      this.vY = 500 + randomF() * 100;
+      // this.vX = Game.player.vX;
+      // this.color = '#F80';
+      this.color = `rgb(255,127,40)`;
+      this.alpha = 0.8;
+      this.size = 4;
+      this.ttl = Game.time.now + 600;
+      this.step = function({now, delta}) {
+        this.timespan = (this.ttl - now) / 600;
+        this.size = Math.max(0, 5 * Math.sin(Math.pow(this.timespan,4) * Math.PI));
+        this.alpha = this.timespan ** 2;
+      };
+      Game.player.oldBurst = Game.time.now;
+    });
+  }
+  Game.player.oX = Game.player.x;
+  Game.player.oY = Game.player.y;
+};
+
 let asteroidsCount = 0;
 let asteroidsNext = 0;
 function asteroidSpawner(onScreen = false) {
@@ -92,39 +122,6 @@ function asteroidSpawner(onScreen = false) {
   asteroidsNext = Game.time.now + randomI(1000);
   return true;
 }
-
-Game.player.step = ({now, delta}) => {
-  const damping = Math.pow(0.0001,delta/1000);
-  Game.player.vX = Game.player.vX * damping;
-  Game.player.vY = Game.player.vY * damping;
-  if (Game.player.x > renderer.width) Game.player.x = renderer.width;
-  if (Game.player.x < 0) Game.player.x = 0;
-  if (Game.player.y > renderer.height) Game.player.y = renderer.height;
-  if (Game.player.y < 0) Game.player.y = 0;
-  const burstCount = Math.min(1 + randomI(2 + Math.min(0, Game.player.vY) / -200), 10); // 10 as max
-  if (Game.time.now > Game.player.oldBurst + 330 / burstCount && Game.particles) {
-    const microOffset = [Game.player.x - Game.player.oX, Game.player.y - Game.player.oY];
-    Game.particles.addX(burstCount, {}, function(i, r) {
-      this.x = Game.player.x + randomF() * 19 - 9 + microOffset[0] * r;
-      this.y = Game.player.y - randomF() * 20 + 70 + microOffset[1] * r;
-      this.vY = 500 + randomF() * 100;
-      // this.vX = Game.player.vX;
-      // this.color = '#F80';
-      this.color = `rgb(255,127,40)`;
-      this.alpha = 0.8;
-      this.size = 4;
-      this.ttl = Game.time.now + 600;
-      this.step = function({now, delta}) {
-        this.timespan = (this.ttl - now) / 600;
-        this.size = Math.max(0, 5 * Math.sin(Math.pow(this.timespan,4) * Math.PI));
-        this.alpha = this.timespan ** 2;
-      };
-      Game.player.oldBurst = Game.time.now;
-    });
-  }
-  Game.player.oX = Game.player.x;
-  Game.player.oY = Game.player.y;
-};
 
 Game.particles = new Objects('Particles', 20000)
   .addX(30, {}, function() {
@@ -202,6 +199,7 @@ function tick(prev = new Date().getTime()) {
   // Render part
   if (renderer._draw) {
     renderer.clear();
+    // renderer.render(rootEntity, {now, delta});
     renderer.renderObjects(Game.doodads.items, {now, delta}); // render stars
     renderer.renderObjects(Game.objects.items, {now, delta}); // render objects
     renderer.renderObjects(Game.particles.items, {now, delta}); // render particles
@@ -210,7 +208,7 @@ function tick(prev = new Date().getTime()) {
 
     // layer with text
     // if (renderer.drawDebug !== 'off')
-      renderer.renderInfo([
+      renderer.drawInfo([
         `[${mouseState.x}, ${mouseState.y}] + [${Math.round(Game.player.vX)},${Math.round(Game.player.vY)}]`,
         `${realDelta}ms - ${Math.floor(1000/realDelta)} FPS`,
         input.isFocused ? "Lock ✔" : 'Lock',

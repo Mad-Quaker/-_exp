@@ -109,14 +109,14 @@ export class Renderer {
     const objectsLength = objects.length;
     for (let z = 0; z <= this.depth; z++) {
       for (let i = 0; i < objectsLength; i++) {
-        if (!(objects[i] && objects[i].active)) continue; // skip inactive
-        if (objects[i] && objects[i].z) {
+        if (!(objects[i]?.active)) continue; // skip inactive
+        if (objects[i]?.z) {
           if (objects[i].z == z) this.drawSpriteOrParticle(objects[i], i, now, delta);
-        } else if (z == 0) this.drawSpriteOrParticle(objects[i], i, now, delta)
+        } else if (z == 9) this.drawSpriteOrParticle(objects[i], i, now, delta)
       }
     }
   }
-  renderInfo (lines, options) {
+  drawInfo (lines, options) {
     const boxHeight = lines.length * 15; // 60
     this.ctx.font = options?.font || '10pt serif';
     let boxWidth = options?.minWidth || 0;
@@ -145,6 +145,7 @@ export class Renderer {
     this.alpha = value > 0 ? value : 1;
   }
   drawSpriteOrParticle(o, i, now, delta) {
+    const [x,y] = o.pos();
     const ctx = this.ctx;
     const rescale = (v) => v * this.size.scale;
     ctx.globalAlpha = o.alpha === undefined ? this.defaultAlpha : o.alpha;
@@ -152,7 +153,7 @@ export class Renderer {
     if (o.sprite) {
       const sprite = this.atlas.list[o.sprite];
       if (!sprite) { return; }
-      const spriteDrawArgs = sprite.draw({x: o.x, y: o.y, now: now - (o.phase || 0), size: o.size || 1}); // generate args for ctx.drawImage() with provided function
+      const spriteDrawArgs = sprite.draw({x, y, now: now - (o.phase || 0), size: o.size || 1}); // generate args for ctx.drawImage() with provided function
       [5,6,7,8].map(arg=>spriteDrawArgs[arg]=rescale(spriteDrawArgs[arg])); // rescale some of args
       ctx.drawImage(...spriteDrawArgs); // ... and drop it here
       if (this.drawDebug == 'sprite') {
@@ -162,7 +163,7 @@ export class Renderer {
     } else {
       ctx.fillStyle = o.color || '#FFF';
       ctx.beginPath();
-      ctx.arc(o.x * this.size.scale, o.y * this.size.scale, o.size, 0, 2*Math.PI);
+      ctx.arc(x * this.size.scale, y * this.size.scale, o.size, 0, 2*Math.PI);
       ctx.fill();
     }
     if (this.drawDebug == 'body' && o.body) {

@@ -19,16 +19,16 @@ export class Weapons {
     if (this.weaponId === undefined) this.weaponId = weaponId;
   }
   switch (weaponId) { this.weaponId = weaponId; this.fireCooldown = this.time.now + this.switchDelay };
-  shoot ({now, delta, _scale}, position, parent) {
+  shoot ({now, delta, _scale}, position, owner) {
     if (this.weaponId === undefined || this.fireCooldown > now) return;
-    this.weapons[this.weaponId].fire({now, delta}, position, parent);
+    this.weapons[this.weaponId].fire({now, delta}, position, owner);
     this.fireCooldown = now + 1000 / (this.weapons[this.weaponId].shotsPerSec || 10);
   }
   init () {
     const particles = this.particles;
     // weapon - 1 - plasma
-    this.add('plasma', {shotsPerSec: 10}, ({now,delta}, position, parent) => {
-      this.bullets.addX(2, {...position, now, z: 8, size: 2, blending: 'additive', parent, damage: 20 }, function(i,r) {
+    this.add('plasma', {shotsPerSec: 10}, ({now,delta}, position, owner) => {
+      this.bullets.addX(2, {...position, now, z: 8, size: 2, blending: 'additive', owner, damage: 20 }, function(i,r) {
         // this.y = this.y - r * 8;
         // this.x = this.x + (r*20-10);
         if (position.spread) {
@@ -45,7 +45,7 @@ export class Weapons {
         this.blend = 'additive';
         this.body = {width: 14, height: 24};
         this.touch = function (other, now) {
-          if (other === this.parent || other.parent === this.parent) return;
+          if (other === this.owner || other.owner === this.owner) return;
           if (other.takeDamage) other.takeDamage(this, this.damage);
           this.y = other.body.bottom + this.body.height/2;
           this.touch = undefined;

@@ -1,5 +1,6 @@
 import { BaseObject } from "./baseObject.js";
 
+
 export class Objects {
   items = [];
   constructor (classname, max) {
@@ -55,47 +56,26 @@ export class Objects {
   process({now,delta}, {perItem} = {perItem: null}) {
     const prts = this.items;
     this.activeCount = 0;
-    let subActiveCount = 0;
-    const normalizeDelta = 25; // 40 fps
-    delta = Math.min(200, delta); //
-    let subNow = now - delta;
-    const preStep = (i, {now, delta}) => {
-      if (!(prts[i] && prts[i].active)) return;
-      
+    delta = Math.min(200, delta);
+    for (let i = 0; i < prts.length; i++) {
+      if (!(prts[i] && prts[i].active)) continue;
+      if (prts[i].ttl < now) { prts[i].active = false; continue; } // disable when time's up
+      this.activeCount++;
       prts[i].ox = prts[i].x;
       prts[i].oy = prts[i].y;
       prts[i].x = prts[i].x + (prts[i].vX*delta/1000 || 0); // NaN protection
       prts[i].y = prts[i].y + (prts[i].vY*delta/1000 || 0); // NaN protection
-    }
-    const subStep = (i, {now, delta}) => {
-      if (!(prts[i] && prts[i].active)) return;
-      
-      subActiveCount++;
-      // check collisions
-      for (let j = i+1; j < prts.length; j++) {
-        if (!(prts[j] && prts[j].active)) continue;
-        if (prts[i].body && prts[j].body && this.isTouching(prts[i].calcBody(), prts[j].calcBody())) {
-          if (prts[i].touch) prts[i].touch(prts[j], now);
-          if (prts[j].touch) prts[j].touch(prts[i], now);
+      if (prts[i].body) { // check collisions
+        for (let j = i+1; j < prts.length; j++) {
+          if (!(prts[j] && prts[j].active)) continue;
+          if (prts[j].body && this.isTouching(prts[i].calcBody(), prts[j].calcBody())) {
+            if (prts[i].touch) prts[i].touch(prts[j], now);
+            if (prts[j].touch) prts[j].touch(prts[i], now);
+          }
         }
       }
-      
       if (prts[i].step) prts[i].step.call(prts[i], {now,delta});
       if (perItem) perItem.call(prts[i], {now,delta});
     }
-    const postStep = (i, {now, delta}) => {
-      if (!(prts[i] && prts[i].active)) return;
-      if (prts[i].ttl && prts[i].ttl < now) { prts[i].active = false; return; } // disable when time's up
-    } 
-    let _subframes = 0;
-    do {
-      let subDelta = normalizeDelta < (now - subNow) ? normalizeDelta : now - subNow;
-      for (let i = 0; i < prts.length; i++) preStep(i, {now: subNow, delta: subDelta});
-      for (let i = 0; i < prts.length; i++) subStep(i, {now: subNow, delta: subDelta});
-      for (let i = 0; i < prts.length; i++) postStep(i, {now: subNow, delta: subDelta});
-      subNow += subDelta;
-      _subframes++;
-    } while (subNow < now && _subframes < 10);
-    this.activeCount = subActiveCount;
   }
 }
