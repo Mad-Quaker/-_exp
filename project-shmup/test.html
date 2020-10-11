@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <title>canvas test</title>
+  <script src="./scripts/operator.js"></script>
+  <script> 
+    let Test = new Operator();
+
+    function logList(root) {
+      let list = [];
+      let node = Test.root;
+      if (!node) return '';
+      do {
+        list.push(`${node.props.v}:z${node.z}(${node?.prev?.props?.v}|${node?.next?.props?.v})`);
+      } while (node = node.next);
+      return list.join(' -> ');
+    }
+
+    let bucket = Array(10).fill().map(x=>([]));
+    let cnt = 1;
+    do {
+      let obj = { v: cnt, z: Math.floor(Math.random() * 9.99)};
+      // console.log(`Insert ${cnt}:z${obj.z}`);
+      bucket[obj.z].push(obj);
+      obj.node = Test.spawn(obj);
+      // console.log(' >>> ', logList());
+      // console.log(Test.depthIndices.map(o=>(o?`${o.props.v}:z${o.z}`:'')));
+      // console.log('============================');
+    } while(cnt++ < 12)
+
+    console.log(' >>> ', logList());
+    // console.log(Test.depthIndices.map(o=>(o?`${o.z}:${o.props.v}`:'')));
+
+    function nodeCount() {
+      let cnt = 0;
+      let node = Test.root;
+      do {
+        cnt++;
+        node = node.next;
+      } while (node);
+      return cnt;
+    }
+
+    console.log(`Total ${nodeCount()} nodes`);
+    console.log(`Let's kill some!`);
+    cnt = 12;
+    let node, num;
+    while (cnt--) {
+      num = Math.floor(Math.random() * nodeCount());
+      node = Test.root;
+      while (num--) node = node.next;
+      console.log(`Removing ${node.props.v}:z${node.z}`);
+      node.delete();
+      console.log(' >>> ', logList());
+      console.log(Test.depthIndices.map(o=>(o?`${o.props.v}:z${o.z}`:'')));
+      console.log('============================');
+    }
+
+    cnt = 1;
+    do {
+      let obj = { v: cnt, z: Math.floor(Math.random() * 9.99)};
+      console.log(`Insert ${cnt}:z${obj.z}`);
+      bucket[obj.z].push(obj);
+      obj.node = Test.spawn(obj);
+      console.log(' >>> ', logList());
+      console.log(Test.depthIndices.map(o=>(o?`${o.props.v}:z${o.z}`:'')));
+      console.log('============================');
+    } while(cnt++ < 12)
+
+    /*
+    cnt = 4;
+    let num, dir = 1;
+    do {
+      num = Math.floor(Math.random() * 30) + 1;
+      node = Test.root;
+      // ping-pong
+      if (dir == 1 && !node.next) dir = -1;
+      if (dir == -1 && !node.prev) dir = 1;
+      while(num-->0) node = dir == 1 ? node.next : node.prev;
+      console.log(node);
+      console.log(`Removing z${node.z}(${node.props.v})`);
+      // node.delete();
+    } while (cnt--)
+
+    listAfter = [];
+    node = Test.root;
+    do {
+      listAfter.push(`z${node.z}(${node.props.v})`);
+    } while (node = node.next) 
+    console.log(`And that's what we've got: `);
+    console.log(` >>> `, listAfter.join('-'));
+    console.log(Test.depthIndices.map(o=>(o?`${o.z}:${o.props.v}`:'')));
+    */
+  </script>
+</head>
+<body></body>
+</html>
