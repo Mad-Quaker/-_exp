@@ -24,7 +24,7 @@ export class Atlas {
             draw: function({x,y,size=1,now}){
               const currentFrameOffset = (now = 0) => {
                 if (!animate) return 0;
-                const msPerFrame = 1000 / animate.fps; // 1000 / 10 = 100ms
+                const msPerFrame = 1 / animate.fps; // 1000 / 10 = 100ms
                 const totalAnimationTime = msPerFrame * animate.frames; // 100 * 6 = 600ms full animation cycle
                 const ret = Math.floor((now % totalAnimationTime) / msPerFrame) * width;
                 return ret;

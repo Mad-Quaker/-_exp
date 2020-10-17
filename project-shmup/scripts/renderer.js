@@ -5,6 +5,19 @@ const blending = {
   "additive" : "screen",
   "shadow" : "soft-light",
 };
+
+const zIndexColorCode = [
+  '#8F2',
+  '#F28',
+  '#28F',
+  '#44F',
+  '#4F4',
+  '#4FF',
+  '#F44',
+  '#F4F',
+  '#FF4',
+  '#FFF',
+];
 export class Renderer {
   constructor (options={}) {
     this.atlas = new Atlas();
@@ -111,10 +124,13 @@ export class Renderer {
       for (let i = 0; i < objectsLength; i++) {
         if (!(objects[i]?.active)) continue; // skip inactive
         if (objects[i]?.z) {
-          if (objects[i].z == z) this.drawSpriteOrParticle(objects[i], i, now, delta);
-        } else if (z == 9) this.drawSpriteOrParticle(objects[i], i, now, delta)
+          if (objects[i].z == z) this.drawSpriteOrParticle(objects[i], now, delta);
+        } else if (z == 9) this.drawSpriteOrParticle(objects[i], now, delta)
       }
     }
+  }
+  renderOneObject(object, {now, delta}) {
+    this.drawSpriteOrParticle(object, now, delta);
   }
   drawInfo (lines, options) {
     const boxHeight = lines.length * 15; // 60
@@ -144,10 +160,11 @@ export class Renderer {
   setAlpha(value) {
     this.alpha = value > 0 ? value : 1;
   }
-  drawSpriteOrParticle(o, i, now, delta) {
+  drawSpriteOrParticle(o, now, delta) {
     const [x,y] = o.pos();
+    const scale = this.size.scale;
     const ctx = this.ctx;
-    const rescale = (v) => v * this.size.scale;
+    const rescale = (v) => v * scale;
     ctx.globalAlpha = o.alpha === undefined ? this.defaultAlpha : o.alpha;
     ctx.globalCompositeOperation = (o.blend && o.blend in blending) ? blending[o.blend] : blending[this.defaultBlending];
     if (o.sprite) {
@@ -157,13 +174,13 @@ export class Renderer {
       [5,6,7,8].map(arg=>spriteDrawArgs[arg]=rescale(spriteDrawArgs[arg])); // rescale some of args
       ctx.drawImage(...spriteDrawArgs); // ... and drop it here
       if (this.drawDebug == 'sprite') {
-        ctx.strokeStyle = '#28F';
+        ctx.strokeStyle = zIndexColorCode[o.z];
         ctx.strokeRect(...sprite.drawBox({...o}).map(rescale)); // [left,top,width,height].rescaled !!
       }
     } else {
       ctx.fillStyle = o.color || '#FFF';
       ctx.beginPath();
-      ctx.arc(x * this.size.scale, y * this.size.scale, o.size, 0, 2*Math.PI);
+      ctx.arc(...[x,y,o.size].map(rescale), 0, 2*Math.PI);
       ctx.fill();
     }
     if (this.drawDebug == 'body' && o.body) {

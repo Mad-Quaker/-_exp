@@ -1,6 +1,5 @@
 import { BaseObject } from "./baseObject.js";
 
-
 export class Objects {
   items = [];
   constructor (classname, max) {
@@ -27,12 +26,12 @@ export class Objects {
       newItem.oX = newItem.x || 0;
       newItem.oY = newItem.y || 0;
       if (f) f.call(newItem, cnt, (count === 1 ? 1 : cnt / (count-1)));
-      this.#insert(newItem);
+      this.insert(newItem);
       cnt++;
     } while (cnt < count)
     return this;
   }
-  #insert(item) {
+  insert(item) {
     this.startedIndex = this.cntPointer;
     let found = false;
     if (this.activeCount < this.cntMax - 1) {
@@ -61,14 +60,14 @@ export class Objects {
       if (!(prts[i] && prts[i].active)) continue;
       if (prts[i].ttl < now) { prts[i].active = false; continue; } // disable when time's up
       this.activeCount++;
-      prts[i].ox = prts[i].x;
-      prts[i].oy = prts[i].y;
+      prts[i].oX = prts[i].x;
+      prts[i].oY = prts[i].y;
       prts[i].x = prts[i].x + (prts[i].vX*delta/1000 || 0); // NaN protection
       prts[i].y = prts[i].y + (prts[i].vY*delta/1000 || 0); // NaN protection
       if (prts[i].body) { // check collisions
         for (let j = i+1; j < prts.length; j++) {
           if (!(prts[j] && prts[j].active)) continue;
-          if (prts[j].body && this.isTouching(prts[i].calcBody(), prts[j].calcBody())) {
+          if (prts[j].body && prts[i].isTouching(prts[j])) {
             if (prts[i].touch) prts[i].touch(prts[j], now);
             if (prts[j].touch) prts[j].touch(prts[i], now);
           }

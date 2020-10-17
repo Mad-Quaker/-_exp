@@ -25,15 +25,21 @@ export class BaseObject extends Primitive {
 
   pos(added) {
     const [addX, addY] = added || [0,0];
-    if (this.parent) {
+    if (this.parent && this.parent.pos) {
       return this.parent.pos([this.x + addX,this.y + addY]);
     } else {
       return [this.x + addX, this.y + addY];
     }
   }
 
-  calcBody() { // for collision check
-    const [x,y] = this.pos();
+  isTouching(objB) {
+    const bodyA = this.calcBody();
+    const bodyB = objB.calcBody();
+    return (bodyA.left < bodyB.right && bodyA.right > bodyB.left &&
+      bodyA.top < bodyB.bottom && bodyA.bottom > bodyB.top);
+  }
+  calcBody(ahead = 0) { // for collision check
+    const [x,y] = this.pos([this.vX * ahead, this.vY * ahead]); // looking ahead
     return this.body = {
       ...this.body,
       left: x - this.body.width / 2,

@@ -10,7 +10,7 @@ export class Timer {
   calc(prev = this.sysNow()) {
     this.real = this.sysNow();
     this.realDelta = (this.real - prev);
-    this.delta = (this.realDelta * this._scale || 0); 
+    this.delta = (this.realDelta * this._scale || 0) / 1000; 
     this.now += this.delta * (this._paused?0:1);
     return this;
   }
